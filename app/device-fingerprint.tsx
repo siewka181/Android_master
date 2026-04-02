@@ -5,13 +5,15 @@ import { getTranslation, translations } from "@/lib/i18n";
 import { useFeature } from "@/lib/feature-context";
 import { getRealSystemInfo } from "@/lib/real-termux-commands";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
 
 export default function DeviceFingerprintScreen() {
-const FEATURE_ID = "fingerprint";
+  const FEATURE_ID = "fingerprint";
 
   const { language } = useLanguage();
   const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
+  const trpcUtils = trpc.useUtils();
 
   const [deviceInfo, setDeviceInfo] = useState<Record<string, string>>({
     model: "--",
@@ -27,7 +29,15 @@ const FEATURE_ID = "fingerprint";
     addLog("INFO", "=== DEVICE FINGERPRINT + SYSTEM INFO ===");
 
     try {
-      const info = await getRealSystemInfo(addLog);
+      let info: Record<string, string>;
+      try {
+        const serverInfo = await trpcUtils.feature.deviceFingerprint.fetch();
+        info = serverInfo;
+        addLog("INFO", `Fingerprint source: ${serverInfo.source}`);
+      } catch {
+        info = await getRealSystemInfo(addLog);
+        addLog("WARN", "Server fingerprint unavailable, fallback to local/termux flow");
+      }
       setDeviceInfo(info);
       addLog("SUCCESS", "Device fingerprint retrieved");
       setFeatureOperationStatus(FEATURE_ID, "success");
@@ -83,9 +93,11 @@ const FEATURE_ID = "fingerprint";
 
         {/* Fingerprint */}
         <View className="bg-surface rounded-lg p-4 border border-border">
-          <Text className="text-xs text-muted mb-1">{t("fingerprint")}</Text>          <Text className="text-sm font-semibold text-yellow-400 break-words">
+          <Text className="text-xs text-muted mb-1">{t("fingerprint")}</Text>
+          <Text className="text-sm font-semibold text-yellow-400 break-words">
             {deviceInfo.fingerprint}
-          </Text>        </View>
+          </Text>
+        </View>
       </View>
 
       <View className="bg-blue-900/20 rounded-lg p-3 border border-blue-700">

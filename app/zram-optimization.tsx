@@ -6,26 +6,28 @@ import { useFeature } from "@/lib/feature-context";
 import { optimizeZRAM } from "@/lib/real-termux-commands";
 
 export default function ZRAMOptimizationScreen() {
+const FEATURE_ID = "zram";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleOptimizeZRAM = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", "Optimizing ZRAM...");
 
     try {
       const success = await optimizeZRAM(addLog);
       if (success) {
-        setOperationStatus("success");
+        setFeatureOperationStatus(FEATURE_ID, "success");
         addLog("SUCCESS", "ZRAM optimization completed");
       } else {
-        setOperationStatus("error");
+        setFeatureOperationStatus(FEATURE_ID, "error");
         addLog("ERROR", "ZRAM optimization failed");
       }
-      setLastOperationTime(new Date().toLocaleTimeString());
+      setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
     } catch (error) {
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", `ZRAM failed: ${String(error)}`);
     }
   };
@@ -74,6 +76,7 @@ export default function ZRAMOptimizationScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("zramOptimization")}
       icon="💾"
       onActionPress={handleOptimizeZRAM}

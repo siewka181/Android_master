@@ -6,26 +6,28 @@ import { useFeature } from "@/lib/feature-context";
 import { executeNetworkOptimization } from "@/lib/real-termux-commands";
 
 export default function NetworkOptimizationScreen() {
+const FEATURE_ID = "network";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleOptimize = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", "Starting network optimization...");
 
     try {
       const success = await executeNetworkOptimization(addLog);
       if (success) {
-        setOperationStatus("success");
+        setFeatureOperationStatus(FEATURE_ID, "success");
         addLog("SUCCESS", "Network optimization completed");
       } else {
-        setOperationStatus("error");
+        setFeatureOperationStatus(FEATURE_ID, "error");
         addLog("ERROR", "Network optimization failed");
       }
-      setLastOperationTime(new Date().toLocaleTimeString());
+      setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
     } catch (error) {
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", `Network failed: ${String(error)}`);
     }
   };
@@ -74,6 +76,7 @@ export default function NetworkOptimizationScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("networkOptimization")}
       icon="📡"
       onActionPress={handleOptimize}

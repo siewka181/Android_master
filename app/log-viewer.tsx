@@ -1,8 +1,6 @@
 import { ScrollView, View, Text, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { useLanguage } from "@/lib/language-context";
-import { getTranslation, translations } from "@/lib/i18n";
 import { LogEntryComponent } from "@/components/ui/log-entry";
 import { useFeature } from "@/lib/feature-context";
 import { saveAndShareLogs } from "@/lib/log-export-service";
@@ -10,9 +8,7 @@ import * as Haptics from "expo-haptics";
 
 export default function LogViewerScreen() {
   const router = useRouter();
-  const { language } = useLanguage();
   const { logs, clearLogs } = useFeature();
-  const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleClearLogs = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);

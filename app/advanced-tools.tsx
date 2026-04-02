@@ -1,16 +1,14 @@
 import { ScrollView, View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
-import { useLanguage } from "@/lib/language-context";
-import { getTranslation, translations } from "@/lib/i18n";
 import { useFeature } from "@/lib/feature-context";
 import * as Haptics from "expo-haptics";
 
 export default function AdvancedToolsScreen() {
+  const FEATURE_ID = "advanced";
+
   const router = useRouter();
-  const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
-  const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
 
   const tools = [
     { id: "magisk", icon: "📦", label: "Scan Magisk Modules", desc: "List installed Magisk modules" },
@@ -26,7 +24,7 @@ export default function AdvancedToolsScreen() {
 
   const handleToolPress = async (toolId: string) => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", `Executing tool: ${toolId}...`);
 
     // Simulate tool execution
@@ -76,8 +74,8 @@ export default function AdvancedToolsScreen() {
         break;
     }
 
-    setOperationStatus("success");
-    setLastOperationTime(new Date().toLocaleTimeString());
+    setFeatureOperationStatus(FEATURE_ID, "success");
+    setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
   };
 
   return (

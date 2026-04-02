@@ -1,4 +1,4 @@
-import { View, Text, Pressable, Alert } from "react-native";
+import { View, Text, Alert } from "react-native";
 import { FeatureScreen } from "@/components/feature-screen";
 import { useLanguage } from "@/lib/language-context";
 import { getTranslation, translations } from "@/lib/i18n";
@@ -7,27 +7,29 @@ import { restoreNormalMode } from "@/lib/real-termux-commands";
 import * as Haptics from "expo-haptics";
 
 export default function RestoreNormalScreen() {
+const FEATURE_ID = "restore";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleRestore = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("XDR", "=== RESTORE NORMAL MODE (FULL ROLLBACK) ===");
 
     try {
       const success = await restoreNormalMode(addLog);
       if (success) {
-        setOperationStatus("success");
+        setFeatureOperationStatus(FEATURE_ID, "success");
         addLog("SUCCESS", t("restoreConfirmed"));
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        setOperationStatus("error");
+        setFeatureOperationStatus(FEATURE_ID, "error");
         addLog("ERROR", t("operationFailed"));
       }
-      setLastOperationTime(new Date().toLocaleTimeString());
+      setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
     } catch (error) {
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", `${t("operationFailed")}: ${String(error)}`);
     }
   };
@@ -101,6 +103,7 @@ export default function RestoreNormalScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("restoreNormal")}
       icon="🔄"
       onActionPress={handleRestoreWithConfirmation}

@@ -7,27 +7,29 @@ import { activateAggressiveMode } from "@/lib/real-termux-commands";
 import * as Haptics from "expo-haptics";
 
 export default function AggressiveModeScreen() {
+const FEATURE_ID = "aggressive";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleActivateAggressive = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("WARN", "=== AGGRESSIVE MODE (Thermal Killer) ===");
 
     try {
       const success = await activateAggressiveMode(addLog);
       if (success) {
-        setOperationStatus("success");
+        setFeatureOperationStatus(FEATURE_ID, "success");
         addLog("SUCCESS", "Aggressive mode activated");
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       } else {
-        setOperationStatus("error");
+        setFeatureOperationStatus(FEATURE_ID, "error");
         addLog("ERROR", t("operationFailed"));
       }
-      setLastOperationTime(new Date().toLocaleTimeString());
+      setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
     } catch (error) {
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", `${t("operationFailed")}: ${String(error)}`);
     }
   };
@@ -108,6 +110,7 @@ export default function AggressiveModeScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("aggressiveMode")}
       icon="🔥"
       onActionPress={handleActivateWithWarning}

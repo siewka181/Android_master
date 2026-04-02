@@ -6,26 +6,28 @@ import { useFeature } from "@/lib/feature-context";
 import { setCPUPerformanceMode } from "@/lib/real-termux-commands";
 
 export default function CPUPerformanceScreen() {
+const FEATURE_ID = "cpu";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleSetPerformance = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", "Switching CPU to performance mode...");
 
     try {
       const success = await setCPUPerformanceMode(addLog);
       if (success) {
-        setOperationStatus("success");
+        setFeatureOperationStatus(FEATURE_ID, "success");
         addLog("SUCCESS", "CPU performance mode activated");
       } else {
-        setOperationStatus("error");
+        setFeatureOperationStatus(FEATURE_ID, "error");
         addLog("ERROR", "Failed to set CPU performance");
       }
-      setLastOperationTime(new Date().toLocaleTimeString());
+      setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
     } catch (error) {
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", `CPU performance failed: ${String(error)}`);
     }
   };
@@ -74,6 +76,7 @@ export default function CPUPerformanceScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("cpuPerformance")}
       icon="⚙️"
       onActionPress={handleSetPerformance}

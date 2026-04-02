@@ -7,8 +7,10 @@ import { getRealSystemInfo } from "@/lib/real-termux-commands";
 import { useState } from "react";
 
 export default function DeviceFingerprintScreen() {
+const FEATURE_ID = "fingerprint";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const [deviceInfo, setDeviceInfo] = useState<Record<string, string>>({
@@ -21,19 +23,19 @@ export default function DeviceFingerprintScreen() {
   });
 
   const handleGetFingerprint = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", "=== DEVICE FINGERPRINT + SYSTEM INFO ===");
 
     try {
       const info = await getRealSystemInfo(addLog);
       setDeviceInfo(info);
       addLog("SUCCESS", "Device fingerprint retrieved");
-      setOperationStatus("success");
+      setFeatureOperationStatus(FEATURE_ID, "success");
     } catch (error) {
       addLog("ERROR", `Failed to get fingerprint: ${String(error)}`);
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
     }
-    setLastOperationTime(new Date().toLocaleTimeString());
+    setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
   };
 
   const CustomContent = (
@@ -96,6 +98,7 @@ export default function DeviceFingerprintScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("deviceFingerprint")}
       icon="📱"
       onActionPress={handleGetFingerprint}

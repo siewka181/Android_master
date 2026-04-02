@@ -6,26 +6,28 @@ import { useFeature } from "@/lib/feature-context";
 import { executeGameBoost } from "@/lib/real-termux-commands";
 
 export default function GameBoostScreen() {
+const FEATURE_ID = "game-boost";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleStartBoost = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", t("boostStarted"));
 
     try {
       const success = await executeGameBoost(addLog);
       if (success) {
-        setOperationStatus("success");
+        setFeatureOperationStatus(FEATURE_ID, "success");
         addLog("SUCCESS", t("boostCompleted"));
       } else {
-        setOperationStatus("error");
+        setFeatureOperationStatus(FEATURE_ID, "error");
         addLog("ERROR", t("operationFailed"));
       }
-      setLastOperationTime(new Date().toLocaleTimeString());
+      setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
     } catch (error) {
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", `${t("operationFailed")}: ${String(error)}`);
     }
   };
@@ -76,6 +78,7 @@ export default function GameBoostScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("gameBoost")}
       icon="🚀"
       onActionPress={handleStartBoost}

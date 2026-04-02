@@ -2,15 +2,11 @@ import { ScrollView, View, Text, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
-import { useLanguage } from "@/lib/language-context";
-import { getTranslation, translations } from "@/lib/i18n";
 import { checkRootAccess, getRootStatusSummary, RootCheckResult } from "@/lib/root-service";
 import * as Haptics from "expo-haptics";
 
 export default function RootCheckScreen() {
   const router = useRouter();
-  const { language } = useLanguage();
-  const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
   const [rootStatus, setRootStatus] = useState<RootCheckResult | null>(null);
   const [statusSummary, setStatusSummary] = useState<string>("");
   const [isChecking, setIsChecking] = useState(true);

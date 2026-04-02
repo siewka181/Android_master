@@ -7,8 +7,10 @@ import { getRealTimeStats } from "@/lib/real-termux-commands";
 import { useState } from "react";
 
 export default function ResourceMonitorScreen() {
+const FEATURE_ID = "monitor";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const [stats, setStats] = useState<Record<string, any>>({
@@ -18,7 +20,7 @@ export default function ResourceMonitorScreen() {
   });
 
   const handleStartMonitoring = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", "=== REAL-TIME RESOURCE MONITOR (5s) ===");
 
     try {
@@ -27,13 +29,13 @@ export default function ResourceMonitorScreen() {
         const currentStats = await getRealTimeStats(addLog);
         setStats(currentStats);
       }
-      setOperationStatus("success");
+      setFeatureOperationStatus(FEATURE_ID, "success");
       addLog("SUCCESS", "Resource monitoring completed");
     } catch (error) {
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", `Monitoring failed: ${String(error)}`);
     }
-    setLastOperationTime(new Date().toLocaleTimeString());
+    setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
   };
 
   const CustomContent = (
@@ -102,6 +104,7 @@ export default function ResourceMonitorScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("resourceMonitor")}
       icon="📊"
       onActionPress={handleStartMonitoring}

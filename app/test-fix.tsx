@@ -6,21 +6,23 @@ import { useFeature } from "@/lib/feature-context";
 import { mockTestLogs, simulateOperation } from "@/lib/mock-data";
 
 export default function TestFixScreen() {
+const FEATURE_ID = "test";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleRunFullTest = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("XDR", "=== FULL XDR AUTOMATED TEST ===");
 
     try {
       await simulateOperation(mockTestLogs, addLog, 400);
-      setOperationStatus("success");
+      setFeatureOperationStatus(FEATURE_ID, "success");
       addLog("SUCCESS", t("testCompleted"));
-      setLastOperationTime(new Date().toLocaleTimeString());
-    } catch (error) {
-      setOperationStatus("error");
+      setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
+    } catch {
+      setFeatureOperationStatus(FEATURE_ID, "error");
       addLog("ERROR", t("operationFailed"));
     }
   };
@@ -120,6 +122,7 @@ export default function TestFixScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("testFix")}
       icon="🧪"
       onActionPress={handleRunFullTest}

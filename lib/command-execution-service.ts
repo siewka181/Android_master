@@ -3,7 +3,7 @@ import {
   executeTermuxCommand,
   type TermuxCommand,
   type TermuxResult,
-} from "@/lib/termux-service";
+} from "./termux-service";
 
 export type AddLogFn = (
   level: "SUCCESS" | "WARN" | "ERROR" | "INFO" | "XDR",
@@ -17,10 +17,32 @@ export type CommandExecutionStatus =
   | "missing-root"
   | "timeout";
 
+export type NormalizedErrorCode =
+  | "NONE"
+  | "TERMUX_UNAVAILABLE"
+  | "ROOT_REQUIRED"
+  | "TIMEOUT"
+  | "PERMISSION_DENIED"
+  | "COMMAND_FAILED"
+  | "UNKNOWN";
+
+export type OperationContext = {
+  featureId: string;
+  operationId: string;
+  sessionId: string;
+  timestamp: string;
+};
+
 export type CommandExecutionResult = {
   status: CommandExecutionStatus;
   output?: string;
+  outputSummary?: string;
   error?: string;
+  errorCode: NormalizedErrorCode;
+  operationId: string;
+  sessionId: string;
+  timestamp: string;
+  attempts: number;
 };
 
 export type CommandDefinition = {
@@ -29,9 +51,21 @@ export type CommandDefinition = {
   args?: readonly string[];
   requiresRoot?: boolean;
   timeout?: number;
+  retries?: number;
   successMessage: string;
   manualStepHint?: string;
 };
+
+export function createOperationContext(featureId: string, sessionId?: string): OperationContext {
+  const now = new Date();
+  const finalSessionId = sessionId ?? `session-${now.getTime()}`;
+  return {
+    featureId,
+    operationId: `${featureId}-${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    sessionId: finalSessionId,
+    timestamp: now.toISOString(),
+  };
+}
 
 async function hasRootAccess(): Promise<boolean> {
   const result = await executeTermuxCommand({
@@ -43,36 +77,65 @@ async function hasRootAccess(): Promise<boolean> {
   return result.success && result.output.includes("uid=0");
 }
 
-function normalizeResult(result: TermuxResult): CommandExecutionResult {
-  if (result.success) {
-    return { status: "success", output: result.output };
-  }
+export function summarizeOutput(output?: string): string {
+  if (!output || !output.trim()) return "(no output)";
+  const singleLine = output.replace(/\s+/g, " ").trim();
+  return singleLine.length > 220 ? `${singleLine.slice(0, 220)}...` : singleLine;
+}
 
-  if ((result.error ?? "").toLowerCase().includes("timeout")) {
-    return { status: "timeout", error: result.error };
-  }
+export function classifyTermuxError(result: TermuxResult): NormalizedErrorCode {
+  if (result.success) return "NONE";
 
+  const merged = `${result.error ?? ""} ${result.output ?? ""}`.toLowerCase();
+  if (merged.includes("timeout") || merged.includes("timed out")) return "TIMEOUT";
+  if (merged.includes("permission denied") || merged.includes("operation not permitted")) {
+    return "PERMISSION_DENIED";
+  }
+  if (merged.trim().length > 0) return "COMMAND_FAILED";
+  return "UNKNOWN";
+}
+
+function buildResult(
+  partial: Omit<CommandExecutionResult, "outputSummary"> & { outputSummary?: string },
+): CommandExecutionResult {
   return {
-    status: "failed",
-    error: result.error ?? result.output ?? "Command failed",
+    ...partial,
+    outputSummary: partial.outputSummary ?? summarizeOutput(partial.output),
   };
 }
 
 export async function executeCommandWithGuards(
   definition: CommandDefinition,
   addLog: AddLogFn,
+  context: OperationContext,
 ): Promise<CommandExecutionResult> {
   const connection = await checkTermuxConnection();
   if (connection !== "connected") {
     addLog("WARN", "Termux API is not reachable. Install/configure Termux:API first.");
-    return { status: "missing-termux", error: "termux-not-connected" };
+    return buildResult({
+      status: "missing-termux",
+      error: "termux-not-connected",
+      errorCode: "TERMUX_UNAVAILABLE",
+      operationId: context.operationId,
+      sessionId: context.sessionId,
+      timestamp: context.timestamp,
+      attempts: 0,
+    });
   }
 
   if (definition.requiresRoot) {
     const rootGranted = await hasRootAccess();
     if (!rootGranted) {
-      addLog("WARN", "Root access is required for this action (Magisk/su)." );
-      return { status: "missing-root", error: "root-required" };
+      addLog("WARN", "Root access is required for this action (Magisk/su).");
+      return buildResult({
+        status: "missing-root",
+        error: "root-required",
+        errorCode: "ROOT_REQUIRED",
+        operationId: context.operationId,
+        sessionId: context.sessionId,
+        timestamp: context.timestamp,
+        attempts: 0,
+      });
     }
   }
 
@@ -82,23 +145,60 @@ export async function executeCommandWithGuards(
     timeout: definition.timeout ?? 12000,
   };
 
-  addLog("INFO", `Executing: ${definition.command} ${(definition.args ?? []).join(" ")}`.trim());
-  const result = await executeTermuxCommand(termuxCommand);
-  const normalized = normalizeResult(result);
+  const maxAttempts = Math.max(1, 1 + (definition.retries ?? 0));
+  let attempt = 0;
+  let lastResult: TermuxResult = { success: false, output: "", error: "unknown" };
 
-  if (normalized.status === "success") {
-    addLog("SUCCESS", definition.successMessage);
+  while (attempt < maxAttempts) {
+    attempt += 1;
+    addLog(
+      "INFO",
+      `[${context.operationId}] attempt ${attempt}/${maxAttempts}: ${definition.command} ${(definition.args ?? []).join(" ")}`.trim(),
+    );
+
+    lastResult = await executeTermuxCommand(termuxCommand);
+    if (lastResult.success) break;
+  }
+
+  const errorCode = classifyTermuxError(lastResult);
+  const outputSummary = summarizeOutput(lastResult.output);
+
+  if (lastResult.success) {
+    addLog("SUCCESS", `${definition.successMessage} (op=${context.operationId})`);
     if (definition.manualStepHint) {
       addLog("INFO", definition.manualStepHint);
     }
-    if (normalized.output?.trim()) {
-      addLog("INFO", normalized.output.trim().slice(0, 220));
+    if (outputSummary !== "(no output)") {
+      addLog("INFO", outputSummary);
     }
-  } else if (normalized.status === "timeout") {
-    addLog("ERROR", "Operation timed out. Try again when device load is lower.");
-  } else {
-    addLog("ERROR", `Operation failed: ${normalized.error ?? "unknown error"}`);
+
+    return buildResult({
+      status: "success",
+      output: lastResult.output,
+      outputSummary,
+      errorCode,
+      operationId: context.operationId,
+      sessionId: context.sessionId,
+      timestamp: context.timestamp,
+      attempts: attempt,
+    });
   }
 
-  return normalized;
+  const status: CommandExecutionStatus = errorCode === "TIMEOUT" ? "timeout" : "failed";
+  const normalizedError = lastResult.error ?? lastResult.output ?? "unknown error";
+  addLog(
+    "ERROR",
+    `[${context.operationId}] ${status.toUpperCase()} (${errorCode}): ${normalizedError}`,
+  );
+
+  return buildResult({
+    status,
+    output: lastResult.output,
+    error: normalizedError,
+    errorCode,
+    operationId: context.operationId,
+    sessionId: context.sessionId,
+    timestamp: context.timestamp,
+    attempts: attempt,
+  });
 }

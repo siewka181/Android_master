@@ -55,3 +55,10 @@ P3 — Release readiness
 7) OCENA OGÓLNA
 Projekt jest na dobrym etapie: ma mocną bazę UI i architektury, oraz działające fundamenty backendowe.
 Największa wartość kolejnych iteracji to domknięcie „real execution layer”, stabilności na różnych urządzeniach oraz przygotowanie procesu release do produkcyjnego użycia.
+
+8) OSTATNIA ITERACJA (STABILIZACJA)
+- Dodano operation metadata: operationId, sessionId, timestamp w warstwie execution.
+- Dodano klasyfikację błędów (m.in. timeout, permission denied, root required, termux unavailable).
+- Dodano retry policy per komenda (konfigurowalne przez `retries`).
+- Dodano potwierdzenia high-risk dla modyfikujących narzędzi w Advanced Tools.
+- Dodano testy helperów execution layer (normalizacja outputu, klasyfikacja błędów, context operacji).

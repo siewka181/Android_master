@@ -3,7 +3,10 @@ import { FeatureScreen } from "@/components/feature-screen";
 import { useLanguage } from "@/lib/language-context";
 import { getTranslation, translations } from "@/lib/i18n";
 import { useFeature } from "@/lib/feature-context";
-import { executeCommandWithGuards } from "@/lib/command-execution-service";
+import {
+  createOperationContext,
+  executeCommandWithGuards,
+} from "@/lib/command-execution-service";
 
 export default function TestFixScreen() {
   const FEATURE_ID = "test";
@@ -15,6 +18,8 @@ export default function TestFixScreen() {
   const handleRunFullTest = async () => {
     setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("XDR", "=== FULL DEVICE TEST START ===");
+    const sessionContext = createOperationContext(FEATURE_ID);
+    addLog("INFO", `session=${sessionContext.sessionId}`);
 
     const checks = [
       {
@@ -52,7 +57,8 @@ export default function TestFixScreen() {
     let hasFailure = false;
 
     for (const check of checks) {
-      const result = await executeCommandWithGuards(check, addLog);
+      const context = createOperationContext(FEATURE_ID, sessionContext.sessionId);
+      const result = await executeCommandWithGuards(check, addLog, context);
       if (result.status !== "success") {
         hasFailure = true;
       }

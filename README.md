@@ -132,3 +132,27 @@ Zasady:
 - App: **v2026.79 Ultimate**
 - Status: **aktywny rozwój (pre-release / hardening)**
 
+---
+
+## 8) Manual QA (smoke) przed release
+
+1. Uruchom onboarding uprawnień i potwierdź każdy stan (granted/denied/blocked/settings).
+2. Zweryfikuj `Root Check` na urządzeniu z i bez Magisk/su.
+3. Uruchom `Advanced Tools`:
+   - sprawdź ostrzeżenie dla działań high-risk,
+   - potwierdź logowanie `sessionId` i `operationId` w logach.
+4. Uruchom `Test & Fix` i potwierdź:
+   - sekwencyjne kroki diagnostyki,
+   - czytelny błąd przy braku Termux/root,
+   - poprawne statusy per-feature.
+5. Sprawdź eksport logów i integralność wpisów.
+6. Sprawdź wszystkie kluczowe ekrany w PL i EN.
+
+## 9) Release checklist
+
+- [ ] `pnpm check` przechodzi bez błędów.
+- [ ] `pnpm test` przechodzi.
+- [ ] `pnpm lint` bez błędów ESLint.
+- [ ] Brak krytycznych hardcoded stringów na głównych ekranach.
+- [ ] Runbook i known limitations są aktualne.
+- [ ] Potwierdzone testy manualne na fizycznym urządzeniu Android.

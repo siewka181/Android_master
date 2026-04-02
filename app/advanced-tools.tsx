@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, Pressable } from "react-native";
+import { ScrollView, View, Text, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useFeature } from "@/lib/feature-context";
@@ -6,6 +6,7 @@ import * as Haptics from "expo-haptics";
 import { useLanguage } from "@/lib/language-context";
 import { getTranslation, translations } from "@/lib/i18n";
 import {
+  createOperationContext,
   executeCommandWithGuards,
   type CommandDefinition,
 } from "@/lib/command-execution-service";
@@ -26,6 +27,7 @@ export default function AdvancedToolsScreen() {
     desc: string;
     command?: CommandDefinition;
     settingsAction?: string;
+    highRisk?: boolean;
   }[] = [
     {
       id: "magisk",
@@ -52,7 +54,9 @@ export default function AdvancedToolsScreen() {
         requiresRoot: true,
         timeout: 20000,
         successMessage: "FSTRIM executed on /data",
+        retries: 1,
       },
+      highRisk: true,
     },
     {
       id: "sqlite",
@@ -70,7 +74,9 @@ export default function AdvancedToolsScreen() {
         timeout: 20000,
         successMessage: "SQLite vacuum batch finished",
         manualStepHint: "Some databases can be locked while apps are running.",
+        retries: 1,
       },
+      highRisk: true,
     },
     {
       id: "cleaner",
@@ -83,7 +89,9 @@ export default function AdvancedToolsScreen() {
         args: ["-c", "pm trim-caches 512M && logcat -c"],
         requiresRoot: true,
         successMessage: "System cache cleanup completed",
+        retries: 1,
       },
+      highRisk: true,
     },
     {
       id: "selinux",
@@ -127,15 +135,32 @@ export default function AdvancedToolsScreen() {
     const tool = tools.find((item) => item.id === toolId);
     if (!tool) return;
 
-    try {
+    const runTool = async () => {
       if (tool.settingsAction) {
         await openAndroidSettings(tool.settingsAction);
         addLog("INFO", "Opened system settings. Apply changes manually and return to app.");
         setFeatureOperationStatus(FEATURE_ID, "success");
       } else if (tool.command) {
-        const result = await executeCommandWithGuards(tool.command, addLog);
+        const context = createOperationContext(FEATURE_ID);
+        addLog("INFO", `session=${context.sessionId} operation=${context.operationId}`);
+        const result = await executeCommandWithGuards(tool.command, addLog, context);
         setFeatureOperationStatus(FEATURE_ID, result.status === "success" ? "success" : "error");
       }
+    };
+
+    try {
+      if (tool.highRisk) {
+        Alert.alert(
+          "High-risk action",
+          "This tool can modify system state. Continue only if you know what it does.",
+          [
+            { text: "Cancel", style: "cancel", onPress: () => setFeatureOperationStatus(FEATURE_ID, "idle") },
+            { text: "Run", style: "destructive", onPress: () => { void runTool(); } },
+          ],
+        );
+        return;
+      }
+      await runTool();
     } catch (error) {
       addLog("ERROR", `Tool execution failed: ${String(error)}`);
       setFeatureOperationStatus(FEATURE_ID, "error");

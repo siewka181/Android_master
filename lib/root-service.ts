@@ -1,3 +1,8 @@
+import {
+  checkTermuxConnection,
+  executeTermuxCommand as executeTermuxApiCommand,
+} from "@/lib/termux-service";
+
 /**
  * Root Permission Detection Service
  * Detects if the device has root access and Magisk/Termux integration
@@ -14,25 +19,24 @@ export interface RootCheckResult {
   timestamp: number;
 }
 
-/**
- * Simulate root check (in real app, would use native modules or Termux API)
- * For now, we'll mock the response based on device capabilities
- */
 export async function checkRootAccess(): Promise<RootCheckResult> {
   try {
-    // In a real implementation, you would:
-    // 1. Try to execute a command via Termux API
-    // 2. Check for Magisk manager installation
-    // 3. Verify superuser binary exists
+    const termuxState = await checkTermuxConnection();
+    const hasTermux = termuxState === "connected";
 
-    // For now, simulate checking
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const suCheck = hasTermux
+      ? await executeTermuxApiCommand({ command: "su", args: ["-c", "id"], timeout: 4000 })
+      : null;
+    const hasRoot = Boolean(suCheck?.success && suCheck.output.includes("uid=0"));
 
-    // Mock: assume no root in browser environment
-    // In real Android app, this would check actual system
-    const hasRoot = false;
-    const hasMagisk = false;
-    const hasTermux = false;
+    const magiskCheck = hasTermux
+      ? await executeTermuxApiCommand({
+          command: "sh",
+          args: ["-c", "which magisk"],
+          timeout: 4000,
+        })
+      : null;
+    const hasMagisk = Boolean(magiskCheck?.success && magiskCheck.output.trim().length > 0);
 
     return {
       status: hasRoot ? "root" : "no-root",
@@ -41,10 +45,12 @@ export async function checkRootAccess(): Promise<RootCheckResult> {
       hasTermux,
       message: hasRoot
         ? "✅ Root access detected"
-        : "❌ No root access - install Magisk or use Termux",
+        : hasTermux
+          ? "❌ Termux available but root access denied"
+          : "❌ Termux API not available",
       timestamp: Date.now(),
     };
-  } catch (error) {
+  } catch {
     return {
       status: "error",
       hasRoot: false,
@@ -56,65 +62,61 @@ export async function checkRootAccess(): Promise<RootCheckResult> {
   }
 }
 
-/**
- * Check if Termux is installed and accessible
- */
 export async function checkTermuxAccess(): Promise<boolean> {
   try {
-    // In real app: check if Termux package is installed
-    // For now, return false in browser
-    return false;
+    return (await checkTermuxConnection()) === "connected";
   } catch {
     return false;
   }
 }
 
-/**
- * Execute command via Termux API
- * Requires Termux:API app to be installed
- */
 export async function executeTermuxCommand(command: string): Promise<string> {
   try {
-    // In real implementation:
-    // const result = await fetch('http://localhost:8080/api/shell', {
-    //   method: 'POST',
-    //   body: JSON.stringify({ command })
-    // });
-    // return result.text();
+    const result = await executeTermuxApiCommand({
+      command: "sh",
+      args: ["-c", command],
+      timeout: 10000,
+    });
 
-    // For now, mock the response
-    console.log(`[Termux] Would execute: ${command}`);
-    return `Mock response from: ${command}`;
-  } catch (error) {
+    if (!result.success) {
+      throw new Error(result.error ?? "Unknown Termux error");
+    }
+
+    return result.output;
+  } catch {
     throw new Error(`Failed to execute Termux command: ${command}`);
   }
 }
 
-/**
- * Check if device has Magisk installed
- */
 export async function checkMagiskInstalled(): Promise<boolean> {
   try {
-    // In real app: check for Magisk Manager or su binary
-    return false;
+    const connection = await checkTermuxConnection();
+    if (connection !== "connected") return false;
+    const result = await executeTermuxApiCommand({
+      command: "sh",
+      args: ["-c", "which magisk"],
+      timeout: 4000,
+    });
+    return result.success && result.output.trim().length > 0;
   } catch {
     return false;
   }
 }
 
-/**
- * Get device root status summary
- */
 export async function getRootStatusSummary(): Promise<string> {
   const result = await checkRootAccess();
 
   if (result.hasRoot && result.hasMagisk) {
     return "🔓 Root + Magisk (Full Access)";
-  } else if (result.hasRoot) {
-    return "🔓 Root (Limited Access)";
-  } else if (result.hasTermux) {
-    return "🟡 Termux (Sandboxed Access)";
-  } else {
-    return "🔒 No Root (Read-Only)";
   }
+
+  if (result.hasRoot) {
+    return "🔓 Root (Limited Access)";
+  }
+
+  if (result.hasTermux) {
+    return "🟡 Termux (Sandboxed Access)";
+  }
+
+  return "🔒 No Root (Read-Only)";
 }

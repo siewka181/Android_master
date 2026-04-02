@@ -25,6 +25,8 @@ export const translations = {
     restoreNormal: "Restore Normal Mode",
     aggressiveMode: "AGGRESSIVE MODE",
     advancedTools: "Zaawansowane Narzędzia",
+    systemTools: "Narzędzia Systemowe",
+    permissionsHub: "Centrum Uprawnień",
     testFix: "Test + Fix",
 
     // Feature Descriptions
@@ -39,6 +41,8 @@ export const translations = {
     restoreDesc: "Pełny rollback do stanu fabrycznego",
     aggressiveDesc: "AGGRESSIVE MODE - Thermal Killer",
     advancedDesc: "Magisk, Encore Tweaks, Gaming-X, itp.",
+    systemToolsDesc: "Realne akcje systemowe: ekran, ustawienia, powiadomienia",
+    permissionsHubDesc: "Sprawdź i nadaj wymagane uprawnienia aplikacji",
     testDesc: "Pełny test + benchmarki + diagnostyka",
 
     // Status
@@ -175,6 +179,50 @@ export const translations = {
     advancedToolsTitle: "Zaawansowane Narzędzia",
     advancedToolsInfo:
       "Zaawansowane narzędzia wymagają ROOT/Magisk. Część narzędzi może wymagać ręcznego potwierdzenia w Magisk Manager.",
+    permissionsOnboardingTitle: "Konfiguracja uprawnień",
+    permissionsOnboardingSubtitle:
+      "Aplikacja sprawdza niezbędne dostępy i prowadzi Cię krok po kroku do ich nadania.",
+    permissionsReady: "Przyznane",
+    permissionBlockedHint:
+      "Uprawnienie zostało trwale odrzucone. Wejdź do ustawień aplikacji i włącz je ręcznie.",
+    permissionNotificationsTitle: "Powiadomienia",
+    permissionNotificationsReason:
+      "Potrzebne do alertów diagnostycznych i statusów działania narzędzi.",
+    permissionMicrophoneTitle: "Mikrofon",
+    permissionMicrophoneReason:
+      "Wymagany do komend głosowych i nagrań diagnostycznych audio.",
+    permissionLocationTitle: "Lokalizacja",
+    permissionLocationReason:
+      "Android wymaga tej zgody do pełnego skanowania sieci Wi-Fi i parametrów połączenia.",
+    permissionBatteryOptimizationTitle: "Optymalizacja baterii",
+    permissionBatteryOptimizationReason:
+      "Wyłącz optymalizację baterii dla aplikacji, aby zadania monitoringu działały stabilnie w tle.",
+    permissionBatteryOptimizationInstruction:
+      "W ustawieniach znajdź aplikację i ustaw tryb: bez ograniczeń / unrestricted.",
+    permissionState_granted: "Przyznane",
+    permissionState_denied: "Odrzucone",
+    permissionState_blocked: "Trwale odrzucone",
+    permissionState_unavailable: "Niedostępne",
+    permissionState_needs_settings: "Wymaga ustawień",
+    grantPermission: "Nadaj uprawnienie",
+    openSettings: "Otwórz ustawienia",
+    continueToApp: "Przejdź do aplikacji",
+    permissionAlreadyGranted: "Uprawnienie jest już przyznane.",
+    toolKeepAwake: "Tryb sesji (ekran włączony)",
+    toolKeepAwakeOnStatus: "Aktywny: ekran pozostaje włączony podczas sesji.",
+    toolKeepAwakeOffStatus: "Nieaktywny: system może wygasić ekran.",
+    toolKeepAwakeEnabled: "Włączono tryb sesji - ekran nie będzie wygaszany.",
+    toolKeepAwakeDisabled: "Wyłączono tryb sesji - przywrócono normalne wygaszanie.",
+    toolNotifications: "Powiadomienia aplikacji",
+    toolNotificationsDesc: "Poproś o zgodę na powiadomienia diagnostyczne.",
+    toolBatterySettings: "Ustawienia baterii",
+    toolBatterySettingsDesc:
+      "Otwórz ustawienia oszczędzania energii i ustaw aplikację bez ograniczeń.",
+    toolAppSettings: "Ustawienia aplikacji",
+    toolAppSettingsDesc: "Przejdź do ekranu aplikacji, aby ręcznie zmienić uprawnienia.",
+    systemToolsActionHint: "Wybierz jedną z akcji systemowych poniżej.",
+    openedBatterySettings: "Otwarto ustawienia optymalizacji baterii.",
+    openedAppSettings: "Otwarto ustawienia aplikacji.",
   },
 
   EN: {
@@ -201,6 +249,8 @@ export const translations = {
     restoreNormal: "Restore Normal Mode",
     aggressiveMode: "AGGRESSIVE MODE",
     advancedTools: "Advanced Tools",
+    systemTools: "System Tools",
+    permissionsHub: "Permissions Hub",
     testFix: "Test + Fix",
 
     // Feature Descriptions
@@ -215,6 +265,8 @@ export const translations = {
     restoreDesc: "Full rollback to factory state",
     aggressiveDesc: "AGGRESSIVE MODE - Thermal Killer",
     advancedDesc: "Magisk, Encore Tweaks, Gaming-X, etc.",
+    systemToolsDesc: "Real system actions: screen, settings, notifications",
+    permissionsHubDesc: "Check and grant all required app permissions",
     testDesc: "Full test + benchmarks + diagnostics",
 
     // Status
@@ -351,6 +403,50 @@ export const translations = {
     advancedToolsTitle: "Advanced Tools",
     advancedToolsInfo:
       "Advanced tools require ROOT/Magisk access. Some tools may require manual confirmation in Magisk Manager.",
+    permissionsOnboardingTitle: "Permissions setup",
+    permissionsOnboardingSubtitle:
+      "The app checks required access and guides you through granting it step by step.",
+    permissionsReady: "Granted",
+    permissionBlockedHint:
+      "Permission was permanently denied. Open app settings and enable it manually.",
+    permissionNotificationsTitle: "Notifications",
+    permissionNotificationsReason:
+      "Required for diagnostics alerts and tool status notifications.",
+    permissionMicrophoneTitle: "Microphone",
+    permissionMicrophoneReason:
+      "Required for voice commands and audio diagnostics recording.",
+    permissionLocationTitle: "Location",
+    permissionLocationReason:
+      "Android requires this permission for full Wi-Fi scan and network signal details.",
+    permissionBatteryOptimizationTitle: "Battery optimization",
+    permissionBatteryOptimizationReason:
+      "Disable battery optimization for this app so monitoring tasks can run reliably in background.",
+    permissionBatteryOptimizationInstruction:
+      "In settings, find this app and set battery mode to unrestricted.",
+    permissionState_granted: "Granted",
+    permissionState_denied: "Denied",
+    permissionState_blocked: "Permanently denied",
+    permissionState_unavailable: "Unavailable",
+    permissionState_needs_settings: "Needs settings",
+    grantPermission: "Grant permission",
+    openSettings: "Open settings",
+    continueToApp: "Continue to app",
+    permissionAlreadyGranted: "Permission is already granted.",
+    toolKeepAwake: "Session mode (screen awake)",
+    toolKeepAwakeOnStatus: "Enabled: screen stays awake during sessions.",
+    toolKeepAwakeOffStatus: "Disabled: system can dim the screen.",
+    toolKeepAwakeEnabled: "Session mode enabled - screen will stay awake.",
+    toolKeepAwakeDisabled: "Session mode disabled - normal screen timeout restored.",
+    toolNotifications: "App notifications",
+    toolNotificationsDesc: "Request access for diagnostics notifications.",
+    toolBatterySettings: "Battery settings",
+    toolBatterySettingsDesc:
+      "Open battery optimization settings and set this app to unrestricted.",
+    toolAppSettings: "App settings",
+    toolAppSettingsDesc: "Open app settings to change permissions manually.",
+    systemToolsActionHint: "Select one of the system actions below.",
+    openedBatterySettings: "Opened battery optimization settings.",
+    openedAppSettings: "Opened app settings.",
   },
 };
 

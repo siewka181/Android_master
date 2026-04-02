@@ -92,6 +92,7 @@ export default function RootLayout() {
               <Stack screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="splash" />
                 <Stack.Screen name="language-selector" />
+                <Stack.Screen name="permissions-onboarding" />
                 <Stack.Screen name="(tabs)" />
                 <Stack.Screen name="log-viewer" />
                 <Stack.Screen name="root-check" />
@@ -106,6 +107,7 @@ export default function RootLayout() {
                 <Stack.Screen name="restore-normal" />
                 <Stack.Screen name="aggressive-mode" />
                 <Stack.Screen name="advanced-tools" />
+                <Stack.Screen name="system-tools" />
                 <Stack.Screen name="test-fix" />
                 <Stack.Screen name="oauth/callback" />
               </Stack>

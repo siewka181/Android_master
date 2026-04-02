@@ -91,6 +91,20 @@ export default function MainMenuScreen() {
       route: "/advanced-tools",
     },
     {
+      id: "system-tools",
+      icon: "🧰",
+      title: t("systemTools"),
+      description: t("systemToolsDesc"),
+      route: "/system-tools",
+    },
+    {
+      id: "permissions-hub",
+      icon: "🛡️",
+      title: t("permissionsHub"),
+      description: t("permissionsHubDesc"),
+      route: "/permissions-onboarding",
+    },
+    {
       id: "test",
       icon: "🧪",
       title: t("testFix"),

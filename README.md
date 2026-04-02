@@ -71,6 +71,8 @@ Opcjonalnie:
 
 ### Mixed (real + fallback)
 - Ekran `Device Fingerprint` najpierw próbuje tRPC API, a przy błędzie robi fallback lokalny/Termux.
+- Ekran `Permissions Onboarding` wykrywa stan uprawnień przy starcie i prowadzi użytkownika do odpowiednich ustawień Androida.
+- Ekran `System Tools` wykonuje realne akcje systemowe (np. keep-awake, wejście do ustawień baterii/aplikacji, prompt powiadomień).
 
 ### Mock / device-dependent
 - Część komend Termux/ROOT zależy od realnego urządzenia Android i uprawnień, więc w web/dev może działać jako symulacja.
@@ -79,3 +81,19 @@ Opcjonalnie:
 - Brak `DATABASE_URL` = brak trwałości w MySQL dla części feature logów (fallback in-memory).
 - Operacje systemowe (ROOT/Termux) nie są w pełni emulowalne w web/CI.
 - Finalna walidacja funkcji performance/root powinna być robiona na fizycznym urządzeniu.
+
+## Uprawnienia i onboarding
+
+Aplikacja po wyborze języka przechodzi do ekranu onboardingowego uprawnień. Każda pozycja:
+- sprawdza aktualny stan (`granted`, `denied`, `blocked`, `needs_settings`),
+- pokazuje uzasadnienie biznesowe „po co to uprawnienie”,
+- uruchamia systemowy prompt (tam, gdzie Android pozwala),
+- przekierowuje do odpowiednich ustawień systemowych, jeśli wymagana jest ręczna zmiana.
+
+### Matryca funkcji i uprawnień
+| Funkcja | Wymagane uprawnienia / dostęp | Fallback gdy brak zgody |
+|---|---|---|
+| Alerty diagnostyczne i status narzędzi | `POST_NOTIFICATIONS` (Android 13+) | Logowanie lokalne + status na ekranie, bez push |
+| Skan sieci / metryki połączenia | `ACCESS_FINE_LOCATION` | Ograniczone metryki bez pełnego skanu |
+| Komendy głosowe i audio diagnostyczne | `RECORD_AUDIO` | Funkcje audio wyłączone |
+| Stabilny monitoring w tle | Ręczne wyłączenie optymalizacji baterii dla aplikacji | Monitoring działa tylko gdy aplikacja jest aktywna |

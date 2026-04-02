@@ -197,7 +197,7 @@
 - [ ] Developer Diagnostics: potwierdzenie sekcji `recentNormalizedErrors` i `finalReadinessSummary`.
 - [ ] Log export: poprawny zapis i share.
 - [ ] Kluczowe ekrany w PL/EN.
-- [ ] Termux env check: uruchom `bash scripts/termux_env_check.sh` i sprawdź raport.
+- [ ] Termux env check: uruchom z root repo `bash scripts/termux_env_check.sh` (lub z dowolnego katalogu: `bash "$(git rev-parse --show-toplevel)/scripts/termux_env_check.sh"`) i sprawdź raport.
 
 ## Build / APK
 - **Aktualny stan:** częściowo gotowe.
@@ -207,7 +207,7 @@
   2. `pnpm check && pnpm test && pnpm lint`
   3. `npx expo prebuild --platform android`
   4. `cd android && ./gradlew assembleDebug`
-- **Quick debug helper:** przed buildem uruchom `bash scripts/termux_env_check.sh`.
+- **Quick debug helper:** przed buildem uruchom z root repo `bash scripts/termux_env_check.sh` (alternatywnie: `bash "$(git rev-parse --show-toplevel)/scripts/termux_env_check.sh"`).
 - **Instalacja APK:** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 - **Zbieranie logów:** `adb logcat | tee amb_device.log`
 
@@ -226,7 +226,7 @@
   5. sklonuj repo do pamięci urządzenia
   6. `pnpm install`
   7. `pnpm check && pnpm test`
-  8. `bash scripts/termux_env_check.sh`
+  8. z root repo: `bash scripts/termux_env_check.sh` (lub z dowolnego katalogu: `bash "$(git rev-parse --show-toplevel)/scripts/termux_env_check.sh"`)
   9. `npx expo prebuild --platform android`
   10. przygotuj `ANDROID_HOME` + build-tools + platform-tools
   11. `cd android && ./gradlew assembleDebug | tee gradle_build.log`

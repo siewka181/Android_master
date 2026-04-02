@@ -1,99 +1,134 @@
-# Android Master Boost
+# Android Master Boost v2026.79 Ultimate
 
-Android Master Boost to aplikacja Expo/React Native (mobile + web) z backendem Express + tRPC + Drizzle, skupiona na diagnostyce urządzenia i scenariuszach optymalizacji (z fallbackami mock tam, gdzie urządzenie/ROOT nie jest dostępne).
+Android Master Boost to aplikacja **Expo / React Native** (Android + web) z backendem **Express + tRPC + Drizzle (MySQL)**.
+Projekt jest rozwijany iteracyjnie: warstwa UI jest rozbudowana, a warstwa wykonawcza funkcji systemowych jest aktualnie przechodzona z mocków na realne akcje (tam, gdzie Android i uprawnienia na to pozwalają).
 
-## Setup (10 minut)
+---
+
+## 1) Status projektu (na dziś)
+
+### Co działa stabilnie
+- Routing i ekranizacja aplikacji (`expo-router`) wraz z głównym menu funkcji.
+- Dwujęzyczność PL/EN (`lib/i18n.ts`) i przełączanie języka.
+- Per-feature state (`operationStatus`, `lastOperationTime`) i centralne logi operacji.
+- Podstawowy backend feature API (`feature.boost`, `feature.diagnostics`, `feature.logs`, `feature.deviceFingerprint`).
+- Logi operacji w DB + fallback in-memory (gdy brak `DATABASE_URL`).
+- Permissions onboarding i podstawowe narzędzia systemowe (ustawienia/powiadomienia/keep-awake).
+- Podstawowe testy backendowe (router feature + logout auth).
+
+### Co jest częściowo gotowe / zależne od urządzenia
+- Realne komendy systemowe (Termux/shell/root) działają tylko przy poprawnie skonfigurowanym środowisku na fizycznym Androidzie.
+- Część narzędzi nadal wymaga dopracowania parserów outputu i stabilniejszych fallbacków.
+- Funkcje wymagające roota zależą od Magisk/su i konfiguracji użytkownika.
+
+### Co jeszcze nie jest domknięte produkcyjnie
+- Jednolity standard obsługi błędów i timeoutów na wszystkich ekranach funkcji.
+- Spójny poziom „realności” we wszystkich modułach (część ekranów nadal ma ścieżki mieszane mock/real).
+- Szersze testy integracyjne/E2E pod scenariusze urządzeniowe.
+
+---
+
+## 2) Architektura (skrót)
+
+### Frontend
+- `app/` — ekrany aplikacji.
+- `components/` — współdzielone komponenty UI (`FeatureScreen`, karty, log-entry).
+- `lib/feature-context.tsx` — per-feature status + logi.
+- `lib/permissions.ts` — check/request permission + settings deep-links.
+- `lib/command-execution-service.ts` — wykonanie komend z guardami (Termux/root/timeout).
+- `lib/root-service.ts` — detekcja root/magisk/termux.
+- `lib/trpc.ts` — klient tRPC.
+
+### Backend
+- `server/routers.ts` — router główny.
+- `server/featureRouter.ts` — endpointy feature.
+- `server/db.ts` — helpery DB + fallback in-memory.
+
+### Baza danych
+- `drizzle/schema.ts` — `users`, `operationLogs`.
+- `drizzle/0001_operation_logs.sql` — migracja logów operacji.
+
+---
+
+## 3) Setup i uruchomienie
 
 ### Wymagania
 - Node.js 20+
 - pnpm 9+
-- (opcjonalnie) MySQL + `DATABASE_URL` dla trwałych danych
-- (mobile) Expo Go / build dev-client
+- (opcjonalnie) MySQL z `DATABASE_URL`
+- Android device/emulator dla testów funkcji systemowych
 
 ### Instalacja
 ```bash
 pnpm install
 ```
 
-### Uruchomienie
+### Development
 ```bash
 pnpm dev
 ```
-To uruchamia równolegle:
-- `dev:server` – backend tRPC/Express
-- `dev:metro` – Expo Router / Metro (web domyślnie na porcie 8081)
+Uruchamia równolegle:
+- `pnpm dev:server`
+- `pnpm dev:metro`
 
-Dostępne skrypty:
+### Inne komendy
 ```bash
-pnpm dev
-pnpm dev:server
-pnpm dev:metro
 pnpm test
 pnpm check
 pnpm lint
 pnpm build
 pnpm start
+pnpm android
 ```
 
-## Wymagane ENV
+---
 
-Minimalnie:
-- `NODE_ENV` (development/production)
+## 4) Uprawnienia i bezpieczeństwo
 
-Opcjonalnie:
-- `DATABASE_URL` – jeśli ustawione, logi operacji i inne query lecą do DB; bez tego aplikacja używa fallbacku in-memory dla części feature API.
+Aplikacja realizuje onboarding uprawnień i rozróżnia stany:
+- granted,
+- denied,
+- blocked (never ask again),
+- needs_settings,
+- unavailable.
 
-## Architektura
+Zasady:
+- Brak ukrytego podnoszenia uprawnień.
+- Każda akcja wymagająca roota/Termux jest jawnie komunikowana.
+- Jeśli potrzebna jest ręczna zmiana ustawień — aplikacja przekierowuje do ustawień i informuje, co użytkownik ma zrobić.
 
-### Frontend
-- `app/` – ekrany Expo Router
-- `components/` – komponenty UI (`FeatureScreen`, karty, logi)
-- `lib/feature-context.tsx` – stan per-feature (`operationStatus`, `lastOperationTime`)
-- `lib/language-context.tsx` + `lib/i18n.ts` – i18n PL/EN
-- `lib/trpc.ts` – klient tRPC
+---
 
-### Backend
-- `server/routers.ts` – root router (`system`, `auth`, `feature`)
-- `server/featureRouter.ts` – API feature (`boost`, `diagnostics`, `logs`, `deviceFingerprint`)
-- `server/db.ts` – helpery DB + fallback in-memory
+## 5) Known limitations
 
-### Baza danych
-- `drizzle/schema.ts` – `users`, `operationLogs`
-- `drizzle/0000_elite_eternals.sql` – init users
-- `drizzle/0001_operation_logs.sql` – logi operacji
+- Web/CI nie odzwierciedla pełnych możliwości Androida (zwłaszcza Termux/root).
+- Bez `DATABASE_URL` część danych działa wyłącznie w pamięci procesu.
+- Komendy shellowe mogą różnić się między urządzeniami i wersjami Androida/kernel.
 
-## Status funkcji (real vs mock)
+---
 
-### Real/API
-- `feature.logs.add/list` (tRPC) – zapis/odczyt logów
-- `feature.boost.run` – endpoint kolejkowania boost
-- `feature.deviceFingerprint` – payload fingerprint z backendu
+## 6) Roadmapa rozwoju (rekomendowana)
 
-### Mixed (real + fallback)
-- Ekran `Device Fingerprint` najpierw próbuje tRPC API, a przy błędzie robi fallback lokalny/Termux.
-- Ekran `Permissions Onboarding` wykrywa stan uprawnień przy starcie i prowadzi użytkownika do odpowiednich ustawień Androida.
-- Ekran `System Tools` wykonuje realne akcje systemowe (np. keep-awake, wejście do ustawień baterii/aplikacji, prompt powiadomień).
+### Krótkoterminowo
+1. Ujednolicić executor komend dla wszystkich ekranów feature.
+2. Domknąć i18n (usunąć pozostałe hardcoded strings).
+3. Rozszerzyć testy o walidację ścieżek błędów i timeoutów.
+4. Dodać checklistę QA pod testy na realnym telefonie.
 
-### Mock / device-dependent
-- Część komend Termux/ROOT zależy od realnego urządzenia Android i uprawnień, więc w web/dev może działać jako symulacja.
+### Średni termin
+1. Dodać telemetrykę błędów i klasyfikację błędów urządzeniowych.
+2. Ustandaryzować raporty diagnostyczne (format JSON/CSV + eksport).
+3. Rozszerzyć backend o historię operacji per urządzenie/użytkownik.
 
-## Known limitations
-- Brak `DATABASE_URL` = brak trwałości w MySQL dla części feature logów (fallback in-memory).
-- Operacje systemowe (ROOT/Termux) nie są w pełni emulowalne w web/CI.
-- Finalna walidacja funkcji performance/root powinna być robiona na fizycznym urządzeniu.
+### Dalszy rozwój
+1. Tryb „guided optimization” z warunkami bezpieczeństwa i rollbackiem.
+2. Lepsze profile urządzeń (vendor/SoC-aware command templates).
+3. Przygotowanie release pipeline (build APK/AAB, smoke tests, release notes).
 
-## Uprawnienia i onboarding
+---
 
-Aplikacja po wyborze języka przechodzi do ekranu onboardingowego uprawnień. Każda pozycja:
-- sprawdza aktualny stan (`granted`, `denied`, `blocked`, `needs_settings`),
-- pokazuje uzasadnienie biznesowe „po co to uprawnienie”,
-- uruchamia systemowy prompt (tam, gdzie Android pozwala),
-- przekierowuje do odpowiednich ustawień systemowych, jeśli wymagana jest ręczna zmiana.
+## 7) Aktualna wersja
 
-### Matryca funkcji i uprawnień
-| Funkcja | Wymagane uprawnienia / dostęp | Fallback gdy brak zgody |
-|---|---|---|
-| Alerty diagnostyczne i status narzędzi | `POST_NOTIFICATIONS` (Android 13+) | Logowanie lokalne + status na ekranie, bez push |
-| Skan sieci / metryki połączenia | `ACCESS_FINE_LOCATION` | Ograniczone metryki bez pełnego skanu |
-| Komendy głosowe i audio diagnostyczne | `RECORD_AUDIO` | Funkcje audio wyłączone |
-| Stabilny monitoring w tle | Ręczne wyłączenie optymalizacji baterii dla aplikacji | Monitoring działa tylko gdy aplikacja jest aktywna |
+- App: **v2026.79 Ultimate**
+- Status: **aktywny rozwój (pre-release / hardening)**
+

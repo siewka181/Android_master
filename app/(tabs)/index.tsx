@@ -105,6 +105,13 @@ export default function MainMenuScreen() {
       route: "/permissions-onboarding",
     },
     {
+      id: "developer-diagnostics",
+      icon: "🧪",
+      title: "Developer Diagnostics",
+      description: "Run full self-test and export deep technical report",
+      route: "/developer-diagnostics",
+    },
+    {
       id: "test",
       icon: "🧪",
       title: t("testFix"),

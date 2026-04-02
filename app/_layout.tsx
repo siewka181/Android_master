@@ -108,6 +108,7 @@ export default function RootLayout() {
                 <Stack.Screen name="aggressive-mode" />
                 <Stack.Screen name="advanced-tools" />
                 <Stack.Screen name="system-tools" />
+                <Stack.Screen name="developer-diagnostics" />
                 <Stack.Screen name="test-fix" />
                 <Stack.Screen name="oauth/callback" />
               </Stack>

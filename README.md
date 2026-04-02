@@ -1,158 +1,206 @@
-# Android Master Boost v2026.79 Ultimate
+# Android Master Boost
 
-Android Master Boost to aplikacja **Expo / React Native** (Android + web) z backendem **Express + tRPC + Drizzle (MySQL)**.
-Projekt jest rozwijany iteracyjnie: warstwa UI jest rozbudowana, a warstwa wykonawcza funkcji systemowych jest aktualnie przechodzona z mocków na realne akcje (tam, gdzie Android i uprawnienia na to pozwalają).
+## Status projektu
+- **Aktualny etap rozwoju:** hardening (pre-release).
+- **Ogólna charakterystyka:** aplikacja działa end-to-end (UI + backend + logowanie + część realnych operacji), ale nadal część funkcji jest HYBRID i zależna od środowiska urządzenia.
+- **Klasyfikacja etapu:** pre-release / hardening, jeszcze nie release candidate.
 
----
+## Co działa
+- Stabilny UI i nawigacja Expo Router (ekrany główne, feature screens, log viewer).
+- Per-feature status (`operationStatus`, `lastOperationTime`) i globalne logowanie operacji.
+- Wspólna warstwa execution z timeout/retry/error classification + output summary + metadata (`operationId`, `sessionId`, `timestamp`).
+- Permissions onboarding (check/request/settings redirection).
+- Root/Termux readiness checks i podstawowa integracja komend.
+- Backend feature API (`feature.boost`, `feature.diagnostics`, `feature.deviceFingerprint`, `feature.logs.add/list`).
+- Operation logs w DB + fallback in-memory.
+- Developer Diagnostics screen (self-test + raport JSON/TXT + debug summary for chat).
+- Testy backendu i helperów execution layer (`feature.router`, `auth.logout`, `command-execution-service`).
 
-## 1) Status projektu (na dziś)
+## Co jest częściowo gotowe
+- Funkcje HYBRID: część ekranów używa realnych komend, ale nie wszystkie ścieżki mają pełny zestaw fallbacków per vendor/device.
+- Elementy zależne od środowiska: root, Magisk, Termux:API, lokalny backend.
+- Build readiness: konfiguracja Expo jest gotowa do standardowych ścieżek, ale pełny natywny build APK bezpośrednio w Termux może być niestabilny zależnie od telefonu.
 
-### Co działa stabilnie
-- Routing i ekranizacja aplikacji (`expo-router`) wraz z głównym menu funkcji.
-- Dwujęzyczność PL/EN (`lib/i18n.ts`) i przełączanie języka.
-- Per-feature state (`operationStatus`, `lastOperationTime`) i centralne logi operacji.
-- Podstawowy backend feature API (`feature.boost`, `feature.diagnostics`, `feature.logs`, `feature.deviceFingerprint`).
-- Logi operacji w DB + fallback in-memory (gdy brak `DATABASE_URL`).
-- Permissions onboarding i podstawowe narzędzia systemowe (ustawienia/powiadomienia/keep-awake).
-- Podstawowe testy backendowe (router feature + logout auth).
+## Co nie jest domknięte
+- Brak pełnej unifikacji i18n (część nowych komunikatów nadal hardcoded).
+- Brak E2E testów UI na urządzeniu i pełnej automatyzacji smoke flow.
+- Brak pełnego rollbacku dla wszystkich high-risk operacji modyfikujących.
+- Brak twardego raportu kompatybilności komend per SoC/vendor.
+- Build readiness: brak zamkniętego runbooka CI/CD dla powtarzalnego release.
+- Release readiness: jeszcze wymaga pełnego manual QA na fizycznym urządzeniu.
+- Known limitations:
+  - Web/CI nie odzwierciedla realnego środowiska Android root/Termux.
+  - Bez `DATABASE_URL` operation logs są ulotne (in-memory fallback).
+  - Komendy shell mogą działać różnie między ROM/kernel/vendor.
 
-### Co jest częściowo gotowe / zależne od urządzenia
-- Realne komendy systemowe (Termux/shell/root) działają tylko przy poprawnie skonfigurowanym środowisku na fizycznym Androidzie.
-- Część narzędzi nadal wymaga dopracowania parserów outputu i stabilniejszych fallbacków.
-- Funkcje wymagające roota zależą od Magisk/su i konfiguracji użytkownika.
+## Priorytety
+### P1 — Stabilność
+- Domknąć jednolite mapowanie błędów i komunikatów user-facing dla wszystkich feature.
+- Ujednolicić prerequisites checks na każdym ekranie wykonującym komendy.
 
-### Co jeszcze nie jest domknięte produkcyjnie
-- Jednolity standard obsługi błędów i timeoutów na wszystkich ekranach funkcji.
-- Spójny poziom „realności” we wszystkich modułach (część ekranów nadal ma ścieżki mieszane mock/real).
-- Szersze testy integracyjne/E2E pod scenariusze urządzeniowe.
+### P2 — Developer diagnostics
+- Rozszerzyć self-test o więcej checks per feature + auto-collect ostatnich znormalizowanych błędów.
+- Dodać „kopiuj do schowka” dla debug summary.
 
----
+### P3 — Build / APK / Termux readiness
+- Ustabilizować ścieżkę builda APK z telefonu (Termux) + checklistę środowiska.
+- Utrzymać fallback: lokalny dev/test na telefonie + build w zewnętrznym środowisku gdy Termux build jest niestabilny.
 
-## 2) Architektura (skrót)
+### P4 — Jakość / testy / release readiness
+- Dodać testy negatywne execution layer (missing-termux, missing-root, timeout).
+- Dokończyć i18n usuwając hardcoded strings z nowych ekranów.
 
-### Frontend
-- `app/` — ekrany aplikacji.
-- `components/` — współdzielone komponenty UI (`FeatureScreen`, karty, log-entry).
-- `lib/feature-context.tsx` — per-feature status + logi.
-- `lib/permissions.ts` — check/request permission + settings deep-links.
-- `lib/command-execution-service.ts` — wykonanie komend z guardami (Termux/root/timeout).
-- `lib/root-service.ts` — detekcja root/magisk/termux.
-- `lib/trpc.ts` — klient tRPC.
+### P5 — Dalszy rozwój
+- Profilowanie komend per vendor/SoC.
+- Raporty diagnostyczne z baseline/after-change.
 
-### Backend
-- `server/routers.ts` — router główny.
-- `server/featureRouter.ts` — endpointy feature.
-- `server/db.ts` — helpery DB + fallback in-memory.
+## Ocena modułów
+- **UI / Nawigacja**
+  - status: stabilny
+  - dojrzałość: wysoka
+  - co działa: flow ekranów i routing
+  - czego brakuje: drobne dopracowanie copy/i18n
+  - ryzyka: niskie
+- **Feature flow**
+  - status: HYBRID
+  - dojrzałość: średnia
+  - co działa: większość flow uruchamia się poprawnie
+  - czego brakuje: pełna spójność real vs fallback
+  - ryzyka: średnie (różnice urządzeń)
+- **Execution layer**
+  - status: działa
+  - dojrzałość: średnio-wysoka
+  - co działa: retries, timeout, error code, output summary, metadata
+  - czego brakuje: pełne pokrycie testami integracyjnymi
+  - ryzyka: średnie
+- **Logging**
+  - status: działa
+  - dojrzałość: średnio-wysoka
+  - co działa: operation logs + eksport
+  - czego brakuje: standaryzacja raportów per feature
+  - ryzyka: niskie
+- **Error handling**
+  - status: częściowo zunifikowany
+  - dojrzałość: średnia
+  - co działa: klasyfikacja w execution layer
+  - czego brakuje: pełna propagacja na wszystkie ekrany
+  - ryzyka: średnie
+- **i18n**
+  - status: częściowo domknięte
+  - dojrzałość: średnia
+  - co działa: PL/EN dla kluczowych ekranów
+  - czego brakuje: usunięcie wszystkich hardcoded stringów
+  - ryzyka: niskie
+- **Permissions / prerequisites**
+  - status: działa
+  - dojrzałość: średnio-wysoka
+  - co działa: onboarding + settings redirect
+  - czego brakuje: pełne mapowanie per feature
+  - ryzyka: średnie
+- **Backend API**
+  - status: działa
+  - dojrzałość: średnia
+  - co działa: feature router + auth/system
+  - czego brakuje: rozszerzone endpointy domenowe
+  - ryzyka: średnie
+- **Database / operation logs**
+  - status: działa
+  - dojrzałość: średnia
+  - co działa: schema + migration + fallback
+  - czego brakuje: pełna polityka retencji/archiwizacji
+  - ryzyka: niskie
+- **Developer diagnostics**
+  - status: działa (MVP)
+  - dojrzałość: średnia
+  - co działa: self-test, raport JSON/TXT, debug summary
+  - czego brakuje: szerszy zestaw checks i clipboard
+  - ryzyka: niskie-średnie
+- **Tests**
+  - status: działa
+  - dojrzałość: średnia
+  - co działa: testy backendu i helperów execution
+  - czego brakuje: UI/integration/device tests
+  - ryzyka: średnie
+- **Build / APK readiness**
+  - status: częściowo gotowe
+  - dojrzałość: średnia
+  - co działa: konfiguracja Expo pod Android
+  - czego brakuje: pełny stabilny runbook release build
+  - ryzyka: średnie
+- **Termux build readiness**
+  - status: eksperymentalne / warunkowe
+  - dojrzałość: niska-średnia
+  - co działa: uruchamianie projektu i testy logiczne
+  - czego brakuje: w pełni powtarzalny natywny build APK na każdym urządzeniu
+  - ryzyka: wysokie (zasoby telefonu, SDK/NDK/JDK)
+- **Release readiness**
+  - status: niegotowe
+  - dojrzałość: średnia
+  - co działa: fundamenty jakości i dokumentacja
+  - czego brakuje: finalne QA, komplet i18n, potwierdzony build workflow
+  - ryzyka: średnie
 
-### Baza danych
-- `drizzle/schema.ts` — `users`, `operationLogs`.
-- `drizzle/0001_operation_logs.sql` — migracja logów operacji.
+## Ostatnia iteracja
+- Dodano ekran **Developer Diagnostics** (self-test + export raportów).
+- Rozszerzono `log-export-service` o eksport dowolnego raportu TXT/JSON.
+- README przeformatowano do stałego szablonu statusowego.
+- Dodano testy helperów execution layer i stabilizację klasyfikacji błędów.
+- Zmienione pliki:
+  - `app/developer-diagnostics.tsx`
+  - `lib/developer-diagnostics-service.ts`
+  - `lib/log-export-service.ts`
+  - `lib/command-execution-service.ts`
+  - `tests/command-execution-service.test.ts`
+  - `README.md`
+- Otwarte na następną iterację:
+  - pełne i18n dla nowych ekranów,
+  - clipboard support dla debug summary,
+  - rozszerzone testy device-flow.
 
----
+## Manual QA
+- [ ] Permissions onboarding: wszystkie stany (granted/denied/blocked/settings).
+- [ ] Root Check: urządzenie z i bez roota.
+- [ ] Advanced Tools: ostrzeżenia high-risk + potwierdzenie + logowanie operationId/sessionId.
+- [ ] Test & Fix: poprawna sekwencja kroków i obsługa fail/warn.
+- [ ] Developer Diagnostics: uruchomienie self-test, eksport TXT i JSON.
+- [ ] Log export: poprawny zapis i share.
+- [ ] Kluczowe ekrany w PL/EN.
 
-## 3) Setup i uruchomienie
+## Build / APK
+- **Aktualny stan:** częściowo gotowe.
+- **Brakuje:** pełnego, potwierdzonego runbooka dla wszystkich urządzeń.
+- **Build (standard):**
+  1. `pnpm install`
+  2. `pnpm check && pnpm test && pnpm lint`
+  3. `npx expo prebuild --platform android`
+  4. `cd android && ./gradlew assembleDebug`
+- **Instalacja APK:** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
+- **Zbieranie logów:** `adb logcat | tee amb_device.log`
 
-### Wymagania
-- Node.js 20+
-- pnpm 9+
-- (opcjonalnie) MySQL z `DATABASE_URL`
-- Android device/emulator dla testów funkcji systemowych
+## Build bezpośrednio z Androida / Termuxa
+- **Wymagania:** Termux, storage access, Node 20+, pnpm, JDK (17), Android SDK/Build Tools, wystarczająca pamięć/RAM.
+- **Ograniczenia:** na wielu telefonach pełny Gradle build może być niestabilny (RAM/thermal/storage), szczególnie dla większych projektów React Native.
+- **Kroki (ścieżka bezpośrednia):**
+  1. `pkg update && pkg upgrade`
+  2. `pkg install nodejs-lts openjdk-17 git`
+  3. `npm i -g pnpm`
+  4. `termux-setup-storage`
+  5. sklonuj repo do pamięci urządzenia
+  6. `pnpm install`
+  7. `pnpm check && pnpm test`
+  8. `npx expo prebuild --platform android`
+  9. przygotuj `ANDROID_HOME` + build-tools + platform-tools
+  10. `cd android && ./gradlew assembleDebug | tee gradle_build.log`
+- **Typowe problemy:** OOM, brak SDK components, timeouty Gradle, throttling termiczny.
+- **Obejścia/fallbacki:**
+  - buduj na telefonie tylko warstwę JS/testy/self-test,
+  - finalny natywny build wykonuj na mocniejszym środowisku (lokalny Linux/macOS/CI) i przenoś APK na telefon.
+- **Logi z builda:** `tee` na Gradle output + zapis raportu Developer Diagnostics z aplikacji.
 
-### Instalacja
-```bash
-pnpm install
-```
+## Developer diagnostics
+- **Uruchomienie:** z menu głównego -> `Developer Diagnostics`.
+- **Co testuje (MVP):** runtime/platform, permissions status, root/termux status, backend connectivity, execution-layer sanity checks.
+- **Gdzie zapisuje logi:** przez istniejący system logów aplikacji + raport eksportowany do pliku.
+- **Eksport raportu:** TXT i JSON przez mechanizm share/filesystem.
+- **Raport do czatu:** zawiera sekcję `debugSummaryForChat` (gotowy blok do wklejenia).
 
-### Development
-```bash
-pnpm dev
-```
-Uruchamia równolegle:
-- `pnpm dev:server`
-- `pnpm dev:metro`
-
-### Inne komendy
-```bash
-pnpm test
-pnpm check
-pnpm lint
-pnpm build
-pnpm start
-pnpm android
-```
-
----
-
-## 4) Uprawnienia i bezpieczeństwo
-
-Aplikacja realizuje onboarding uprawnień i rozróżnia stany:
-- granted,
-- denied,
-- blocked (never ask again),
-- needs_settings,
-- unavailable.
-
-Zasady:
-- Brak ukrytego podnoszenia uprawnień.
-- Każda akcja wymagająca roota/Termux jest jawnie komunikowana.
-- Jeśli potrzebna jest ręczna zmiana ustawień — aplikacja przekierowuje do ustawień i informuje, co użytkownik ma zrobić.
-
----
-
-## 5) Known limitations
-
-- Web/CI nie odzwierciedla pełnych możliwości Androida (zwłaszcza Termux/root).
-- Bez `DATABASE_URL` część danych działa wyłącznie w pamięci procesu.
-- Komendy shellowe mogą różnić się między urządzeniami i wersjami Androida/kernel.
-
----
-
-## 6) Roadmapa rozwoju (rekomendowana)
-
-### Krótkoterminowo
-1. Ujednolicić executor komend dla wszystkich ekranów feature.
-2. Domknąć i18n (usunąć pozostałe hardcoded strings).
-3. Rozszerzyć testy o walidację ścieżek błędów i timeoutów.
-4. Dodać checklistę QA pod testy na realnym telefonie.
-
-### Średni termin
-1. Dodać telemetrykę błędów i klasyfikację błędów urządzeniowych.
-2. Ustandaryzować raporty diagnostyczne (format JSON/CSV + eksport).
-3. Rozszerzyć backend o historię operacji per urządzenie/użytkownik.
-
-### Dalszy rozwój
-1. Tryb „guided optimization” z warunkami bezpieczeństwa i rollbackiem.
-2. Lepsze profile urządzeń (vendor/SoC-aware command templates).
-3. Przygotowanie release pipeline (build APK/AAB, smoke tests, release notes).
-
----
-
-## 7) Aktualna wersja
-
-- App: **v2026.79 Ultimate**
-- Status: **aktywny rozwój (pre-release / hardening)**
-
----
-
-## 8) Manual QA (smoke) przed release
-
-1. Uruchom onboarding uprawnień i potwierdź każdy stan (granted/denied/blocked/settings).
-2. Zweryfikuj `Root Check` na urządzeniu z i bez Magisk/su.
-3. Uruchom `Advanced Tools`:
-   - sprawdź ostrzeżenie dla działań high-risk,
-   - potwierdź logowanie `sessionId` i `operationId` w logach.
-4. Uruchom `Test & Fix` i potwierdź:
-   - sekwencyjne kroki diagnostyki,
-   - czytelny błąd przy braku Termux/root,
-   - poprawne statusy per-feature.
-5. Sprawdź eksport logów i integralność wpisów.
-6. Sprawdź wszystkie kluczowe ekrany w PL i EN.
-
-## 9) Release checklist
-
-- [ ] `pnpm check` przechodzi bez błędów.
-- [ ] `pnpm test` przechodzi.
-- [ ] `pnpm lint` bez błędów ESLint.
-- [ ] Brak krytycznych hardcoded stringów na głównych ekranach.
-- [ ] Runbook i known limitations są aktualne.
-- [ ] Potwierdzone testy manualne na fizycznym urządzeniu Android.

@@ -148,6 +148,34 @@ export async function saveAndShareLogs(
 }
 
 /**
+ * Save arbitrary report content and share it.
+ */
+export async function saveAndShareReport(
+  content: string,
+  options: { filenamePrefix: string; format: "txt" | "json"; dialogTitle?: string },
+): Promise<boolean> {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
+    const filename = `${options.filenamePrefix}_${timestamp}.${options.format}`;
+    const filePath = `${FileSystem.documentDirectory}${filename}`;
+
+    await FileSystem.writeAsStringAsync(filePath, content);
+
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(filePath, {
+        mimeType: options.format === "json" ? "application/json" : "text/plain",
+        dialogTitle: options.dialogTitle ?? "Share report",
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Failed to save/share report:", error);
+    return false;
+  }
+}
+
+/**
  * Copy logs to clipboard
  */
 export async function copyLogsToClipboard(

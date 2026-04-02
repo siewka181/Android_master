@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createOperationLog, listOperationLogs } from "./db";
-import { publicProcedure, router } from "./_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 
 const levelEnum = z.enum(["SUCCESS", "WARN", "ERROR", "INFO", "XDR"]);
 
@@ -15,6 +15,33 @@ const staticDeviceFallback = {
 } as const;
 
 export const featureRouter = router({
+  boost: router({
+    run: publicProcedure
+      .input(
+        z.object({
+          profile: z.enum(["safe", "aggressive"]).default("safe"),
+          source: z.string().min(1).max(64).default("mobile"),
+        }),
+      )
+      .mutation(async ({ input, ctx }) => {
+        const message = `Boost queued (${input.profile}) from ${input.source}`;
+        const log = await createOperationLog({
+          featureKey: "game-boost",
+          level: "INFO",
+          message,
+          userId: ctx.user?.id,
+        });
+
+        return {
+          ok: true,
+          queued: true,
+          mode: input.profile,
+          logId: log.id,
+          message,
+        } as const;
+      }),
+  }),
+
   deviceFingerprint: publicProcedure.query(async ({ ctx }) => {
     const userAgent = ctx.req.headers["user-agent"] ?? "";
     const isAndroid = userAgent.toLowerCase().includes("android");
@@ -35,7 +62,7 @@ export const featureRouter = router({
   }),
 
   diagnostics: router({
-    run: publicProcedure
+    run: protectedProcedure
       .input(
         z.object({
           featureKey: z.string().min(2).max(64),

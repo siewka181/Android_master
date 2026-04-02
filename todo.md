@@ -1,5 +1,13 @@
 # Android Master Boost v2026.79 Ultimate - TODO
 
+## Release Candidate Notes (2026-04-02)
+- [x] Per-feature status model (`operationStatus`, `lastOperationTime`) wdrożony.
+- [x] tRPC feature router: `boost`, `diagnostics`, `logs`, `deviceFingerprint`.
+- [x] DB schema rozszerzony o `operationLogs` + migracja `0001_operation_logs.sql`.
+- [x] Testy routera feature (success + validation + unauthorized).
+- [ ] Końcowa walidacja wszystkich komend ROOT/Termux na fizycznym urządzeniu.
+- [ ] Finalny QA dwujęzyczny (PL/EN) dla wszystkich ekranów.
+
 ## Project Setup
 - [x] Initialize Expo mobile app project
 - [x] Create design.md with interface specifications

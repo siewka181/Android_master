@@ -5,20 +5,24 @@ import { LogEntryComponent } from "@/components/ui/log-entry";
 import { useFeature } from "@/lib/feature-context";
 import { saveAndShareLogs } from "@/lib/log-export-service";
 import * as Haptics from "expo-haptics";
+import { useLanguage } from "@/lib/language-context";
+import { getTranslation, translations } from "@/lib/i18n";
 
 export default function LogViewerScreen() {
   const router = useRouter();
   const { logs, clearLogs } = useFeature();
+  const { language } = useLanguage();
+  const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const handleClearLogs = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     Alert.alert(
-      "Clear Logs",
-      "Are you sure you want to delete all logs?",
+      t("clearLogsTitle"),
+      t("clearLogsMessage"),
       [
-        { text: "Cancel", onPress: () => {}, style: "cancel" },
+        { text: t("cancel"), onPress: () => {}, style: "cancel" },
         {
-          text: "Delete",
+          text: t("delete"),
           onPress: () => clearLogs(),
           style: "destructive",
         },
@@ -30,12 +34,9 @@ export default function LogViewerScreen() {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const success = await saveAndShareLogs(logs, format);
     if (success) {
-      Alert.alert(
-        "Success",
-        `Logs exported as ${format.toUpperCase()} and ready to share!`
-      );
+      Alert.alert(t("successTitle"), t("logsExportSuccess").replace("{format}", format.toUpperCase()));
     } else {
-      Alert.alert("Error", "Failed to export logs");
+      Alert.alert(t("errorTitle"), t("exportFailed"));
     }
   };
 
@@ -52,7 +53,7 @@ export default function LogViewerScreen() {
             <Text className="text-2xl">←</Text>
           </Pressable>
           <View className="flex-1 items-center">
-            <Text className="text-xl font-bold text-white">📋 Log Viewer</Text>
+            <Text className="text-xl font-bold text-white">📋 {t("logViewerTitle")}</Text>
           </View>
           <Pressable
             onPress={handleClearLogs}
@@ -64,7 +65,7 @@ export default function LogViewerScreen() {
             ]}
             className="p-2"
           >
-            <Text className="text-sm text-cyan-400">Clear</Text>
+            <Text className="text-sm text-cyan-400">{t("clear")}</Text>
           </Pressable>
         </View>
 
@@ -85,10 +86,10 @@ export default function LogViewerScreen() {
           <View className="flex-1 items-center justify-center px-4">
             <Text className="text-2xl mb-2">📭</Text>
             <Text className="text-base font-semibold text-foreground text-center mb-2">
-              No logs yet
+              {t("noLogsYet")}
             </Text>
             <Text className="text-sm text-muted text-center">
-              Run a feature to see operation logs here
+              {t("runFeatureToSeeLogs")}
             </Text>
           </View>
         )}
@@ -99,7 +100,7 @@ export default function LogViewerScreen() {
             {/* Export Buttons */}
             <View className="px-4 py-3 gap-2 border-b border-border">
               <Text className="text-xs font-semibold text-muted mb-2">
-                Export Logs:
+                {t("exportLogsLabel")}:
               </Text>
               <View className="flex-row gap-2">
                 <Pressable
@@ -127,7 +128,7 @@ export default function LogViewerScreen() {
             <View className="px-4 py-3">
               <View className="flex-row items-center justify-between mb-2">
                 <Text className="text-xs text-muted">
-                  Total Entries: {logs.length}
+                  {t("totalEntries")}: {logs.length}
                 </Text>
               </View>
               <View className="flex-row gap-3">

@@ -104,7 +104,7 @@ export function FeatureScreen({
             className="mx-4 mt-6 bg-cyan-500 rounded-lg py-3 px-4 items-center"
           >
             <Text className="text-white font-semibold">
-              {resolvedOperationStatus === "running" ? "Running..." : actionLabel}
+              {resolvedOperationStatus === "running" ? `${t("running")}...` : actionLabel}
             </Text>
           </Pressable>
         )}
@@ -113,14 +113,14 @@ export function FeatureScreen({
         {showLogs && logs.length > 0 && (
           <View className="mx-4 mt-6 mb-6">
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-sm font-semibold text-gray-300">Logs</Text>
+              <Text className="text-sm font-semibold text-gray-300">{t("viewLog")}</Text>
               <Pressable
                 onPress={() => {
                   // Clear logs functionality
                 }}
                 className="px-2 py-1"
               >
-                <Text className="text-xs text-gray-400">Clear</Text>
+                <Text className="text-xs text-gray-400">{t("clear")}</Text>
               </Pressable>
             </View>
             <View className="bg-black/50 rounded-lg p-3 border border-gray-700">
@@ -134,9 +134,9 @@ export function FeatureScreen({
         {/* Empty Logs Message */}
         {showLogs && logs.length === 0 && onActionPress && (
           <View className="mx-4 mt-6 mb-6 p-4 bg-surface rounded-lg border border-border items-center">
-            <Text className="text-sm text-muted text-center">
-              Tap the button above to start
-            </Text>
+              <Text className="text-sm text-muted text-center">
+                {t("startBoost")}
+              </Text>
           </View>
         )}
       </ScrollView>

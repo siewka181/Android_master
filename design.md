@@ -1,5 +1,12 @@
 # Android Master Boost v2026.79 Ultimate - Design Document
 
+## Implementation Status (2026-04-02)
+- Frontend: główne flow ekranów zaimplementowane.
+- State model: per-feature status + timestamp wdrożone.
+- Backend API: dostępne endpointy `feature.boost.run`, `feature.diagnostics.run`, `feature.logs.add/list`, `feature.deviceFingerprint`.
+- Data layer: tabela `operationLogs` + migracja SQL.
+- Uwaga: scenariusze ROOT/Termux wymagają testów końcowych na realnym urządzeniu.
+
 ## Design Overview
 
 **Target:** Mobile portrait orientation (9:16), one-handed usage, iOS HIG alignment

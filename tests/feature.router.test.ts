@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { TRPCError } from "@trpc/server";
 import { appRouter } from "../server/routers";
 import type { TrpcContext } from "../server/_core/context";
 import { __resetOperationLogsForTests } from "../server/db";
@@ -14,6 +15,23 @@ function createPublicContext(): TrpcContext {
       },
     } as TrpcContext["req"],
     res: {} as TrpcContext["res"],
+  };
+}
+
+function createAuthContext(): TrpcContext {
+  return {
+    ...createPublicContext(),
+    user: {
+      id: 1,
+      openId: "tester-open-id",
+      name: "Tester",
+      email: "tester@example.com",
+      loginMethod: "manus",
+      role: "user",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
   };
 }
 
@@ -51,5 +69,36 @@ describe("feature router", () => {
 
     expect(list.length).toBeGreaterThanOrEqual(2);
     expect(list[0]?.featureKey).toBe("fingerprint");
+  });
+
+  it("rejects diagnostics.run for unauthenticated callers", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+    await expect(
+      caller.feature.diagnostics.run({
+        featureKey: "battery",
+      }),
+    ).rejects.toBeInstanceOf(TRPCError);
+  });
+
+  it("accepts diagnostics.run for authenticated callers", async () => {
+    const caller = appRouter.createCaller(createAuthContext());
+    const result = await caller.feature.diagnostics.run({
+      featureKey: "battery",
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("battery");
+  });
+
+  it("validates logs.add payload", async () => {
+    const caller = appRouter.createCaller(createPublicContext());
+
+    await expect(
+      caller.feature.logs.add({
+        featureKey: "x",
+        level: "INFO",
+        message: "",
+      }),
+    ).rejects.toBeInstanceOf(TRPCError);
   });
 });

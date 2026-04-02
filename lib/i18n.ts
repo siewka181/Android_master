@@ -127,6 +127,54 @@ export const translations = {
     lowBattery: "Niska bateria",
     noRoot: "Wymagany ROOT (Magisk)!",
     operationFailed: "Operacja nie powiodła się",
+
+    // Log Viewer
+    logViewerTitle: "Podgląd Logów",
+    noLogsYet: "Brak logów",
+    runFeatureToSeeLogs: "Uruchom funkcję, aby zobaczyć logi",
+    exportLogsLabel: "Eksport Logów",
+    totalEntries: "Wpisy łącznie",
+    clear: "Wyczyść",
+    delete: "Usuń",
+    clearLogsTitle: "Wyczyść logi",
+    clearLogsMessage: "Czy na pewno chcesz usunąć wszystkie logi?",
+    logsExportSuccess: "Logi wyeksportowane jako {format} i gotowe do udostępnienia!",
+    exportFailed: "Nie udało się wyeksportować logów",
+    successTitle: "Sukces",
+    errorTitle: "Błąd",
+
+    // Root Check
+    rootStatusTitle: "Status Root",
+    checkingRootAccess: "Sprawdzanie dostępu ROOT...",
+    waitVerifying: "Poczekaj, weryfikuję uprawnienia",
+    permissions: "Uprawnienia",
+    superuserAccess: "Dostęp superuser",
+    magiskManager: "Menedżer Magisk",
+    termuxIntegration: "Integracja Termux",
+    enabled: "Włączone",
+    disabled: "Wyłączone",
+    installed: "Zainstalowano",
+    notFound: "Nie znaleziono",
+    connected: "Połączono",
+    notAvailable: "Niedostępne",
+    limitedFunctionality: "Ograniczona funkcjonalność",
+    limitedFunctionalityDesc:
+      "Bez uprawnień root część funkcji będzie tylko do odczytu. Dla pełnej funkcjonalności zainstaluj Magisk lub użyj Termux z sudo.",
+    retryCheck: "Ponów sprawdzenie",
+    requestRootAccess: "Poproś o dostęp ROOT",
+    checkFailed: "Sprawdzenie nieudane",
+    unableDetermineRoot: "Nie udało się określić statusu root",
+    tryAgain: "Spróbuj ponownie",
+    requestRootTitle: "Poproś o dostęp ROOT",
+    requestRootMessage:
+      "Aby używać wszystkich funkcji, aplikacja wymaga dostępu root.\n\nOpcje:\n1. Zainstaluj Magisk\n2. Użyj Termux z sudo\n3. Nadaj uprawnienia superuser",
+    installMagisk: "Zainstaluj Magisk",
+    useTermux: "Użyj Termux",
+
+    // Advanced tools
+    advancedToolsTitle: "Zaawansowane Narzędzia",
+    advancedToolsInfo:
+      "Zaawansowane narzędzia wymagają ROOT/Magisk. Część narzędzi może wymagać ręcznego potwierdzenia w Magisk Manager.",
   },
 
   EN: {
@@ -255,6 +303,54 @@ export const translations = {
     lowBattery: "Low battery",
     noRoot: "ROOT (Magisk) required!",
     operationFailed: "Operation failed",
+
+    // Log Viewer
+    logViewerTitle: "Log Viewer",
+    noLogsYet: "No logs yet",
+    runFeatureToSeeLogs: "Run a feature to see operation logs here",
+    exportLogsLabel: "Export Logs",
+    totalEntries: "Total Entries",
+    clear: "Clear",
+    delete: "Delete",
+    clearLogsTitle: "Clear Logs",
+    clearLogsMessage: "Are you sure you want to delete all logs?",
+    logsExportSuccess: "Logs exported as {format} and ready to share!",
+    exportFailed: "Failed to export logs",
+    successTitle: "Success",
+    errorTitle: "Error",
+
+    // Root Check
+    rootStatusTitle: "Root Status",
+    checkingRootAccess: "Checking Root Access...",
+    waitVerifying: "Please wait while we verify permissions",
+    permissions: "Permissions",
+    superuserAccess: "Superuser Access",
+    magiskManager: "Magisk Manager",
+    termuxIntegration: "Termux Integration",
+    enabled: "Enabled",
+    disabled: "Disabled",
+    installed: "Installed",
+    notFound: "Not Found",
+    connected: "Connected",
+    notAvailable: "Not Available",
+    limitedFunctionality: "Limited Functionality",
+    limitedFunctionalityDesc:
+      "Without root access, some features will be read-only. For full functionality, install Magisk or use Termux with sudo.",
+    retryCheck: "Retry Check",
+    requestRootAccess: "Request Root Access",
+    checkFailed: "Check Failed",
+    unableDetermineRoot: "Unable to determine root status",
+    tryAgain: "Try Again",
+    requestRootTitle: "Request Root Access",
+    requestRootMessage:
+      "To use all features, this app requires root access.\n\nOptions:\n1. Install Magisk\n2. Use Termux with sudo\n3. Grant superuser permission",
+    installMagisk: "Install Magisk",
+    useTermux: "Use Termux",
+
+    // Advanced tools
+    advancedToolsTitle: "Advanced Tools",
+    advancedToolsInfo:
+      "Advanced tools require ROOT/Magisk access. Some tools may require manual confirmation in Magisk Manager.",
   },
 };
 

@@ -3,23 +3,27 @@ import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useFeature } from "@/lib/feature-context";
 import * as Haptics from "expo-haptics";
+import { useLanguage } from "@/lib/language-context";
+import { getTranslation, translations } from "@/lib/i18n";
 
 export default function AdvancedToolsScreen() {
   const FEATURE_ID = "advanced";
 
   const router = useRouter();
   const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
+  const { language } = useLanguage();
+  const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const tools = [
-    { id: "magisk", icon: "📦", label: "Scan Magisk Modules", desc: "List installed Magisk modules" },
-    { id: "encore", icon: "⚡", label: "Encore Tweaks v5.1", desc: "Download & install Encore Tweaks" },
-    { id: "gaming-x", icon: "🎮", label: "Gaming-X", desc: "Download & install Gaming-X module" },
-    { id: "fstrim", icon: "🧹", label: "FSTRIM", desc: "Optimize storage with FSTRIM" },
-    { id: "sqlite", icon: "💾", label: "SQLite Optimize", desc: "Optimize all SQLite databases" },
-    { id: "gpu-120hz", icon: "🎯", label: "Force GPU + 120Hz", desc: "Enable 120Hz refresh rate" },
-    { id: "cleaner", icon: "🧹", label: "System Cleaner", desc: "Clean cache and logs" },
-    { id: "selinux", icon: "🔐", label: "SELinux Permissive", desc: "Set SELinux to permissive mode" },
-    { id: "throttle-test", icon: "🧪", label: "CPU Throttling Test", desc: "Test CPU throttling & benchmark" },
+    { id: "magisk", icon: "📦", label: t("magiskModules"), desc: "List installed Magisk modules" },
+    { id: "encore", icon: "⚡", label: t("encoreTweaks"), desc: "Download & install Encore Tweaks" },
+    { id: "gaming-x", icon: "🎮", label: t("gamingX"), desc: "Download & install Gaming-X module" },
+    { id: "fstrim", icon: "🧹", label: t("fstrim"), desc: "Optimize storage with FSTRIM" },
+    { id: "sqlite", icon: "💾", label: t("sqliteOptimize"), desc: "Optimize all SQLite databases" },
+    { id: "gpu-120hz", icon: "🎯", label: t("forceGpu"), desc: "Enable 120Hz refresh rate" },
+    { id: "cleaner", icon: "🧹", label: t("systemCleaner"), desc: "Clean cache and logs" },
+    { id: "selinux", icon: "🔐", label: t("selinuxPermissive"), desc: "Set SELinux to permissive mode" },
+    { id: "throttle-test", icon: "🧪", label: t("cpuThrottlingTest"), desc: "Test CPU throttling & benchmark" },
   ];
 
   const handleToolPress = async (toolId: string) => {
@@ -91,7 +95,7 @@ export default function AdvancedToolsScreen() {
             <Text className="text-2xl">←</Text>
           </Pressable>
           <View className="flex-1 items-center">
-            <Text className="text-xl font-bold text-white">🛠️ Advanced Tools</Text>
+            <Text className="text-xl font-bold text-white">🛠️ {t("advancedToolsTitle")}</Text>
           </View>
           <View className="w-10" />
         </View>
@@ -127,7 +131,7 @@ export default function AdvancedToolsScreen() {
         {/* Info Box */}
         <View className="mx-4 mb-6 bg-blue-900/20 rounded-lg p-3 border border-blue-700">
           <Text className="text-xs text-blue-300">
-            ℹ️ Advanced tools require ROOT/Magisk access. Some tools may require manual confirmation in Magisk Manager.
+            ℹ️ {t("advancedToolsInfo")}
           </Text>
         </View>
       </ScrollView>

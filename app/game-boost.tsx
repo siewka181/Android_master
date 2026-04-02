@@ -4,6 +4,7 @@ import { useLanguage } from "@/lib/language-context";
 import { getTranslation, translations } from "@/lib/i18n";
 import { useFeature } from "@/lib/feature-context";
 import { executeGameBoost } from "@/lib/real-termux-commands";
+import { trpc } from "@/lib/trpc";
 
 export default function GameBoostScreen() {
 const FEATURE_ID = "game-boost";
@@ -11,12 +12,19 @@ const FEATURE_ID = "game-boost";
   const { language } = useLanguage();
   const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
+  const queueBoostMutation = trpc.feature.boost.run.useMutation();
 
   const handleStartBoost = async () => {
     setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", t("boostStarted"));
 
     try {
+      const queued = await queueBoostMutation.mutateAsync({
+        profile: "safe",
+        source: "mobile-ui",
+      });
+      addLog("INFO", queued.message);
+
       const success = await executeGameBoost(addLog);
       if (success) {
         setFeatureOperationStatus(FEATURE_ID, "success");

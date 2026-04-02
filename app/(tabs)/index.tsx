@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, Pressable, Alert } from "react-native";
+import { ScrollView, View, Text, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useLanguage } from "@/lib/language-context";
@@ -9,7 +9,7 @@ import { useFeature } from "@/lib/feature-context";
 export default function MainMenuScreen() {
   const router = useRouter();
   const { language } = useLanguage();
-  const { operationStatus } = useFeature();
+  const { getFeatureState } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
 
   const features = [
@@ -91,6 +91,27 @@ export default function MainMenuScreen() {
       route: "/advanced-tools",
     },
     {
+      id: "system-tools",
+      icon: "🧰",
+      title: t("systemTools"),
+      description: t("systemToolsDesc"),
+      route: "/system-tools",
+    },
+    {
+      id: "permissions-hub",
+      icon: "🛡️",
+      title: t("permissionsHub"),
+      description: t("permissionsHubDesc"),
+      route: "/permissions-onboarding",
+    },
+    {
+      id: "developer-diagnostics",
+      icon: "🧪",
+      title: "Developer Diagnostics",
+      description: "Run full self-test and export deep technical report",
+      route: "/developer-diagnostics",
+    },
+    {
       id: "test",
       icon: "🧪",
       title: t("testFix"),
@@ -140,7 +161,7 @@ export default function MainMenuScreen() {
               icon={feature.icon}
               title={feature.title}
               description={feature.description}
-              status={operationStatus}
+              status={getFeatureState(feature.id).operationStatus}
               onPress={() => router.push(feature.route as any)}
             />
           ))}

@@ -1,0 +1,64 @@
+ANDROID MASTER BOOST — PODSUMOWANIE AKTUALNEJ SYTUACJI
+Data: 2026-04-02
+Wersja aplikacji: v2026.79 Ultimate
+
+1) AKTUALNY STAN PROJEKTU
+- Projekt działa jako aplikacja Expo/React Native z backendem Express+tRPC+Drizzle.
+- UI i nawigacja są rozbudowane i funkcjonalne.
+- Zaimplementowano per-feature status, logowanie operacji oraz i18n PL/EN.
+- Dostępna jest warstwa permissions onboarding i podstawowe narzędzia systemowe.
+- Część funkcji systemowych działa realnie tylko na urządzeniu Android przy poprawnym środowisku (Termux/root).
+
+2) CO JEST GOTOWE
+- Ekrany i główne flow użytkownika.
+- Logi + eksport logów.
+- Podstawowe endpointy backendowe dla feature.
+- Warstwa DB dla operation logs (+ fallback in-memory).
+- Testy jednostkowe/integracyjne najważniejszych fragmentów backendu.
+
+3) CO WYMAGA DOKOŃCZENIA
+- Ujednolicenie realnego wykonywania komend we wszystkich ekranach feature.
+- Lepsza normalizacja outputów shell (parsowanie, klasyfikacja błędów, retry/timeout).
+- Domknięcie i18n (pozostałe teksty hardcoded).
+- Rozszerzenie testów o ścieżki negatywne i scenariusze urządzeniowe.
+- Dopracowanie warstwy „guided setup” dla root/Termux i warunków wstępnych.
+
+4) RZECZY DO ZROBIENIA (PRIORYTETY)
+P1 — Stabilność
+- Jedna wspólna warstwa execution+logging+error handling dla wszystkich feature.
+- Ujednolicone komunikaty błędów i rekomendacji dla użytkownika.
+- Twarde timeouty i defensywne fallbacki.
+
+P2 — Jakość i testy
+- Testy API: walidacje + unauthorized + edge cases.
+- Testy feature flow na urządzeniu (checklista manual QA).
+- Dodatkowe testy integracyjne dla command execution.
+
+P3 — Release readiness
+- Pełna dokumentacja runbook (instalacja, wymagania, diagnostyka problemów).
+- Build APK/AAB + release checklist + smoke tests.
+- Aktualizacja design/todo do faktycznego stanu wdrożenia.
+
+5) MOŻLIWOŚCI DALSZEGO ROZWOJU
+- Profile optymalizacji zależne od modelu urządzenia/SoC.
+- Raporty diagnostyczne (JSON/CSV) z porównaniem „przed/po”.
+- Telemetria błędów i agregacja statystyk niepowodzeń komend.
+- Prowadzenie użytkownika krok po kroku przez wymagania (wizard).
+
+6) PROPOZYCJE I SUGESTIE ULEPSZEŃ
+- Wprowadzić status dojrzałości każdej funkcji: MOCK / HYBRID / REAL.
+- Dodać matrycę wymagań per funkcja: uprawnienia, root, termux, fallback.
+- Rozdzielić operacje tylko-odczyt od operacji modyfikujących system.
+- Dodać bezpieczny rollback i potwierdzenia dla działań wysokiego ryzyka.
+- Ujednolicić logi operacji i dodać identyfikator sesji testowej.
+
+7) OCENA OGÓLNA
+Projekt jest na dobrym etapie: ma mocną bazę UI i architektury, oraz działające fundamenty backendowe.
+Największa wartość kolejnych iteracji to domknięcie „real execution layer”, stabilności na różnych urządzeniach oraz przygotowanie procesu release do produkcyjnego użycia.
+
+8) OSTATNIA ITERACJA (STABILIZACJA)
+- Dodano operation metadata: operationId, sessionId, timestamp w warstwie execution.
+- Dodano klasyfikację błędów (m.in. timeout, permission denied, root required, termux unavailable).
+- Dodano retry policy per komenda (konfigurowalne przez `retries`).
+- Dodano potwierdzenia high-risk dla modyfikujących narzędzi w Advanced Tools.
+- Dodano testy helperów execution layer (normalizacja outputu, klasyfikacja błędów, context operacji).

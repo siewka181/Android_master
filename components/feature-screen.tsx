@@ -8,6 +8,7 @@ import { useFeature } from "@/lib/feature-context";
 import * as Haptics from "expo-haptics";
 
 interface FeatureScreenProps {
+  featureId?: string;
   title: string;
   icon: string;
   children?: React.ReactNode;
@@ -18,6 +19,7 @@ interface FeatureScreenProps {
 }
 
 export function FeatureScreen({
+  featureId,
   title,
   icon,
   onActionPress,
@@ -27,8 +29,11 @@ export function FeatureScreen({
 }: FeatureScreenProps) {
   const router = useRouter();
   const { language } = useLanguage();
-  const { logs, operationStatus, lastOperationTime } = useFeature();
+  const { logs, operationStatus, lastOperationTime, getFeatureState } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
+  const featureState = featureId ? getFeatureState(featureId) : null;
+  const resolvedOperationStatus = featureState?.operationStatus ?? operationStatus;
+  const resolvedLastOperationTime = featureState?.lastOperationTime ?? lastOperationTime;
 
   const handleActionPress = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -61,23 +66,23 @@ export function FeatureScreen({
             <Text className="text-sm text-muted">{t("idle")}</Text>
             <View
               className={`px-3 py-1 rounded-full ${
-                operationStatus === "running"
+                resolvedOperationStatus === "running"
                   ? "bg-blue-500"
-                  : operationStatus === "success"
+                  : resolvedOperationStatus === "success"
                     ? "bg-green-500"
-                    : operationStatus === "error"
+                    : resolvedOperationStatus === "error"
                       ? "bg-red-500"
                       : "bg-gray-600"
               }`}
             >
               <Text className="text-xs font-semibold text-white">
-                {operationStatus.toUpperCase()}
+                {resolvedOperationStatus.toUpperCase()}
               </Text>
             </View>
           </View>
-          {lastOperationTime && (
+          {resolvedLastOperationTime && (
             <Text className="text-xs text-gray-400">
-              {t("lastUpdated")}: {lastOperationTime}
+              {t("lastUpdated")}: {resolvedLastOperationTime}
             </Text>
           )}
         </View>
@@ -89,17 +94,17 @@ export function FeatureScreen({
         {onActionPress && (
           <Pressable
             onPress={handleActionPress}
-            disabled={operationStatus === "running"}
+            disabled={resolvedOperationStatus === "running"}
             style={({ pressed }) => [
               {
-                transform: [{ scale: pressed && operationStatus !== "running" ? 0.97 : 1 }],
-                opacity: operationStatus === "running" ? 0.5 : pressed ? 0.8 : 1,
+                transform: [{ scale: pressed && resolvedOperationStatus !== "running" ? 0.97 : 1 }],
+                opacity: resolvedOperationStatus === "running" ? 0.5 : pressed ? 0.8 : 1,
               },
             ]}
             className="mx-4 mt-6 bg-cyan-500 rounded-lg py-3 px-4 items-center"
           >
             <Text className="text-white font-semibold">
-              {operationStatus === "running" ? "Running..." : actionLabel}
+              {resolvedOperationStatus === "running" ? `${t("running")}...` : actionLabel}
             </Text>
           </Pressable>
         )}
@@ -108,14 +113,14 @@ export function FeatureScreen({
         {showLogs && logs.length > 0 && (
           <View className="mx-4 mt-6 mb-6">
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-sm font-semibold text-gray-300">Logs</Text>
+              <Text className="text-sm font-semibold text-gray-300">{t("viewLog")}</Text>
               <Pressable
                 onPress={() => {
                   // Clear logs functionality
                 }}
                 className="px-2 py-1"
               >
-                <Text className="text-xs text-gray-400">Clear</Text>
+                <Text className="text-xs text-gray-400">{t("clear")}</Text>
               </Pressable>
             </View>
             <View className="bg-black/50 rounded-lg p-3 border border-gray-700">
@@ -129,9 +134,9 @@ export function FeatureScreen({
         {/* Empty Logs Message */}
         {showLogs && logs.length === 0 && onActionPress && (
           <View className="mx-4 mt-6 mb-6 p-4 bg-surface rounded-lg border border-border items-center">
-            <Text className="text-sm text-muted text-center">
-              Tap the button above to start
-            </Text>
+              <Text className="text-sm text-muted text-center">
+                {t("startBoost")}
+              </Text>
           </View>
         )}
       </ScrollView>

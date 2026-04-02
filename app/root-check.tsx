@@ -2,10 +2,10 @@ import { ScrollView, View, Text, Pressable, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { ScreenContainer } from "@/components/screen-container";
-import { useLanguage } from "@/lib/language-context";
-import { getTranslation, translations } from "@/lib/i18n";
 import { checkRootAccess, getRootStatusSummary, RootCheckResult } from "@/lib/root-service";
 import * as Haptics from "expo-haptics";
+import { useLanguage } from "@/lib/language-context";
+import { getTranslation, translations } from "@/lib/i18n";
 
 export default function RootCheckScreen() {
   const router = useRouter();
@@ -40,18 +40,18 @@ export default function RootCheckScreen() {
 
   const handleRequestRoot = () => {
     Alert.alert(
-      "Request Root Access",
-      "To use all features, this app requires root access.\n\nOptions:\n1. Install Magisk\n2. Use Termux with sudo\n3. Grant superuser permission",
+      t("requestRootTitle"),
+      t("requestRootMessage"),
       [
-        { text: "Cancel", onPress: () => {}, style: "cancel" },
+        { text: t("cancel"), onPress: () => {}, style: "cancel" },
         {
-          text: "Install Magisk",
+          text: t("installMagisk"),
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           },
         },
         {
-          text: "Use Termux",
+          text: t("useTermux"),
           onPress: () => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
           },
@@ -73,7 +73,7 @@ export default function RootCheckScreen() {
             >
               <Text className="text-2xl">←</Text>
             </Pressable>
-            <Text className="text-xl font-bold text-white">🔐 Root Status</Text>
+            <Text className="text-xl font-bold text-white">🔐 {t("rootStatusTitle")}</Text>
             <View className="w-10" />
           </View>
         </View>
@@ -85,10 +85,10 @@ export default function RootCheckScreen() {
             <View className="items-center justify-center py-12">
               <Text className="text-3xl mb-3">🔍</Text>
               <Text className="text-lg font-semibold text-foreground mb-2">
-                Checking Root Access...
+                {t("checkingRootAccess")}
               </Text>
               <Text className="text-sm text-muted">
-                Please wait while we verify permissions
+                {t("waitVerifying")}
               </Text>
             </View>
           ) : rootStatus ? (
@@ -121,7 +121,7 @@ export default function RootCheckScreen() {
               {/* Detailed Status */}
               <View className="bg-surface rounded-lg p-4 border border-border gap-3">
                 <Text className="text-sm font-semibold text-foreground mb-2">
-                  Permissions:
+                  {t("permissions")}:
                 </Text>
 
                 {/* Root */}
@@ -131,11 +131,11 @@ export default function RootCheckScreen() {
                       {rootStatus.hasRoot ? "✅" : "❌"}
                     </Text>
                     <Text className="text-sm text-foreground">
-                      Superuser Access
+                      {t("superuserAccess")}
                     </Text>
                   </View>
                   <Text className="text-xs text-muted">
-                    {rootStatus.hasRoot ? "Enabled" : "Disabled"}
+                    {rootStatus.hasRoot ? t("enabled") : t("disabled")}
                   </Text>
                 </View>
 
@@ -146,11 +146,11 @@ export default function RootCheckScreen() {
                       {rootStatus.hasMagisk ? "✅" : "❌"}
                     </Text>
                     <Text className="text-sm text-foreground">
-                      Magisk Manager
+                      {t("magiskManager")}
                     </Text>
                   </View>
                   <Text className="text-xs text-muted">
-                    {rootStatus.hasMagisk ? "Installed" : "Not Found"}
+                    {rootStatus.hasMagisk ? t("installed") : t("notFound")}
                   </Text>
                 </View>
 
@@ -161,11 +161,11 @@ export default function RootCheckScreen() {
                       {rootStatus.hasTermux ? "✅" : "❌"}
                     </Text>
                     <Text className="text-sm text-foreground">
-                      Termux Integration
+                      {t("termuxIntegration")}
                     </Text>
                   </View>
                   <Text className="text-xs text-muted">
-                    {rootStatus.hasTermux ? "Connected" : "Not Available"}
+                    {rootStatus.hasTermux ? t("connected") : t("notAvailable")}
                   </Text>
                 </View>
               </View>
@@ -174,10 +174,10 @@ export default function RootCheckScreen() {
               {!rootStatus.hasRoot && (
                 <View className="bg-yellow-900/20 rounded-lg p-4 border border-yellow-700">
                   <Text className="text-sm font-semibold text-yellow-300 mb-2">
-                    ⚠️ Limited Functionality
+                    ⚠️ {t("limitedFunctionality")}
                   </Text>
                   <Text className="text-xs text-yellow-200 leading-relaxed">
-                    Without root access, some features will be read-only. For full functionality, install Magisk or use Termux with sudo.
+                    {t("limitedFunctionalityDesc")}
                   </Text>
                 </View>
               )}
@@ -195,7 +195,7 @@ export default function RootCheckScreen() {
                   className="bg-cyan-500/20 border border-cyan-500 rounded-lg py-3 items-center"
                 >
                   <Text className="text-sm font-semibold text-cyan-400">
-                    🔄 Retry Check
+                    🔄 {t("retryCheck")}
                   </Text>
                 </Pressable>
 
@@ -211,7 +211,7 @@ export default function RootCheckScreen() {
                     className="bg-red-500/20 border border-red-500 rounded-lg py-3 items-center"
                   >
                     <Text className="text-sm font-semibold text-red-400">
-                      🔓 Request Root Access
+                      🔓 {t("requestRootAccess")}
                     </Text>
                   </Pressable>
                 )}
@@ -221,17 +221,17 @@ export default function RootCheckScreen() {
             <View className="items-center justify-center py-12">
               <Text className="text-3xl mb-3">❌</Text>
               <Text className="text-lg font-semibold text-foreground mb-2">
-                Check Failed
+                {t("checkFailed")}
               </Text>
               <Text className="text-sm text-muted mb-4">
-                Unable to determine root status
+                {t("unableDetermineRoot")}
               </Text>
               <Pressable
                 onPress={handleRetryCheck}
                 className="bg-cyan-500/20 border border-cyan-500 rounded-lg px-4 py-2"
               >
                 <Text className="text-sm font-semibold text-cyan-400">
-                  Try Again
+                  {t("tryAgain")}
                 </Text>
               </Pressable>
             </View>

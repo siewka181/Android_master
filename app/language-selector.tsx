@@ -12,7 +12,7 @@ export default function LanguageSelectorScreen() {
   const handleLanguageSelect = async (lang: "PL" | "EN") => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     await setLanguage(lang);
-    router.replace("/(tabs)");
+    router.replace("/permissions-onboarding");
   };
 
   return (

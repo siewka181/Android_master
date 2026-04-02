@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertOperationLog, InsertUser, operationLogs, OperationLog, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
+const inMemoryOperationLogs: OperationLog[] = [];
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -89,4 +90,62 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function createOperationLog(
+  input: Pick<InsertOperationLog, "featureKey" | "level" | "message" | "userId">,
+): Promise<OperationLog> {
+  const db = await getDb();
+  const now = new Date();
+
+  if (!db) {
+    const inMemoryLog: OperationLog = {
+      id: inMemoryOperationLogs.length + 1,
+      featureKey: input.featureKey,
+      level: input.level,
+      message: input.message,
+      userId: input.userId ?? null,
+      createdAt: now,
+    };
+    inMemoryOperationLogs.push(inMemoryLog);
+    return inMemoryLog;
+  }
+
+  const values: InsertOperationLog = {
+    featureKey: input.featureKey,
+    level: input.level,
+    message: input.message,
+    userId: input.userId,
+  };
+
+  await db.insert(operationLogs).values(values);
+  const created = await db.select().from(operationLogs).orderBy(desc(operationLogs.id)).limit(1);
+  if (!created[0]) {
+    throw new Error("Failed to fetch created operation log");
+  }
+  return created[0];
+}
+
+export async function listOperationLogs(options?: {
+  featureKey?: string;
+  limit?: number;
+}): Promise<OperationLog[]> {
+  const limit = Math.max(1, Math.min(options?.limit ?? 50, 200));
+  const db = await getDb();
+
+  if (!db) {
+    const filtered = options?.featureKey
+      ? inMemoryOperationLogs.filter((log) => log.featureKey === options.featureKey)
+      : inMemoryOperationLogs;
+    return [...filtered].slice(-limit).reverse();
+  }
+
+  const whereClause = options?.featureKey
+    ? and(eq(operationLogs.featureKey, options.featureKey))
+    : undefined;
+  const query = db.select().from(operationLogs).orderBy(desc(operationLogs.id)).limit(limit);
+  const rows = whereClause ? await query.where(whereClause) : await query;
+  return rows;
+}
+
+export function __resetOperationLogsForTests() {
+  inMemoryOperationLogs.length = 0;
+}

@@ -148,6 +148,34 @@ export async function saveAndShareLogs(
 }
 
 /**
+ * Save arbitrary report content and share it.
+ */
+export async function saveAndShareReport(
+  content: string,
+  options: { filenamePrefix: string; format: "txt" | "json"; dialogTitle?: string },
+): Promise<boolean> {
+  try {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, -5);
+    const filename = `${options.filenamePrefix}_${timestamp}.${options.format}`;
+    const filePath = `${FileSystem.documentDirectory}${filename}`;
+
+    await FileSystem.writeAsStringAsync(filePath, content);
+
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(filePath, {
+        mimeType: options.format === "json" ? "application/json" : "text/plain",
+        dialogTitle: options.dialogTitle ?? "Share report",
+      });
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Failed to save/share report:", error);
+    return false;
+  }
+}
+
+/**
  * Copy logs to clipboard
  */
 export async function copyLogsToClipboard(
@@ -155,16 +183,19 @@ export async function copyLogsToClipboard(
   format: "txt" | "json" = "txt"
 ): Promise<boolean> {
   try {
-    const Clipboard = require("@react-native-async-storage/async-storage");
     const content =
       format === "json"
         ? await exportLogsAsJson(logs)
         : await exportLogsAsTxt(logs);
 
-    // In real app, use react-native-clipboard
-    // For now, just log it
-    console.log("Logs copied to clipboard (mock)");
-    return true;
+    const clipboard = globalThis.navigator?.clipboard;
+    if (clipboard?.writeText) {
+      await clipboard.writeText(content);
+      return true;
+    }
+
+    console.log("Clipboard API unavailable - copy fallback not supported in current runtime.");
+    return false;
   } catch (error) {
     console.error("Failed to copy logs:", error);
     return false;

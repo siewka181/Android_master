@@ -5,11 +5,15 @@ import { getTranslation, translations } from "@/lib/i18n";
 import { useFeature } from "@/lib/feature-context";
 import { getRealSystemInfo } from "@/lib/real-termux-commands";
 import { useState } from "react";
+import { trpc } from "@/lib/trpc";
 
 export default function DeviceFingerprintScreen() {
+  const FEATURE_ID = "fingerprint";
+
   const { language } = useLanguage();
-  const { addLog, setOperationStatus, setLastOperationTime } = useFeature();
+  const { addLog, setFeatureOperationStatus, setFeatureLastOperationTime } = useFeature();
   const t = (key: keyof typeof translations.EN) => getTranslation(language, key);
+  const trpcUtils = trpc.useUtils();
 
   const [deviceInfo, setDeviceInfo] = useState<Record<string, string>>({
     model: "--",
@@ -21,19 +25,27 @@ export default function DeviceFingerprintScreen() {
   });
 
   const handleGetFingerprint = async () => {
-    setOperationStatus("running");
+    setFeatureOperationStatus(FEATURE_ID, "running");
     addLog("INFO", "=== DEVICE FINGERPRINT + SYSTEM INFO ===");
 
     try {
-      const info = await getRealSystemInfo(addLog);
+      let info: Record<string, string>;
+      try {
+        const serverInfo = await trpcUtils.feature.deviceFingerprint.fetch();
+        info = serverInfo;
+        addLog("INFO", `Fingerprint source: ${serverInfo.source}`);
+      } catch {
+        info = await getRealSystemInfo(addLog);
+        addLog("WARN", "Server fingerprint unavailable, fallback to local/termux flow");
+      }
       setDeviceInfo(info);
       addLog("SUCCESS", "Device fingerprint retrieved");
-      setOperationStatus("success");
+      setFeatureOperationStatus(FEATURE_ID, "success");
     } catch (error) {
       addLog("ERROR", `Failed to get fingerprint: ${String(error)}`);
-      setOperationStatus("error");
+      setFeatureOperationStatus(FEATURE_ID, "error");
     }
-    setLastOperationTime(new Date().toLocaleTimeString());
+    setFeatureLastOperationTime(FEATURE_ID, new Date().toLocaleTimeString());
   };
 
   const CustomContent = (
@@ -81,9 +93,11 @@ export default function DeviceFingerprintScreen() {
 
         {/* Fingerprint */}
         <View className="bg-surface rounded-lg p-4 border border-border">
-          <Text className="text-xs text-muted mb-1">{t("fingerprint")}</Text>          <Text className="text-sm font-semibold text-yellow-400 break-words">
+          <Text className="text-xs text-muted mb-1">{t("fingerprint")}</Text>
+          <Text className="text-sm font-semibold text-yellow-400 break-words">
             {deviceInfo.fingerprint}
-          </Text>        </View>
+          </Text>
+        </View>
       </View>
 
       <View className="bg-blue-900/20 rounded-lg p-3 border border-blue-700">
@@ -96,6 +110,7 @@ export default function DeviceFingerprintScreen() {
 
   return (
     <FeatureScreen
+      featureId={FEATURE_ID}
       title={t("deviceFingerprint")}
       icon="📱"
       onActionPress={handleGetFingerprint}

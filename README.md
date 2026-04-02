@@ -54,6 +54,36 @@
 - Profilowanie komend per vendor/SoC.
 - Raporty diagnostyczne z baseline/after-change.
 
+## Mapa feature
+| Feature | Status | Typ | Wymaga root | Wymaga Termux | Fallback | Poziom ryzyka | Komentarz |
+|---|---|---|---|---|---|---|---|
+| Permissions Onboarding | REAL | READ-ONLY | Nie | Nie | Tak | Niskie | Sprawdza i prowadzi przez nadanie uprawnień oraz ustawienia systemowe. |
+| Root Check | HYBRID | READ-ONLY | Nie (do samego checku) | Tak (dla pełnego sygnału) | Tak | Niskie | Wykrywa root/Magisk/Termux; wynik zależy od dostępności Termux API. |
+| Device Fingerprint | HYBRID | READ-ONLY | Nie | Opcjonalnie | Tak | Niskie | Najpierw API, następnie fallback lokalny/Termux. |
+| Resource Monitor | HYBRID | READ-ONLY | Nie | Tak (dla pełnych danych) | Częściowy | Średnie | Część metryk zależna od dostępności komend systemowych. |
+| Test & Fix | HYBRID | READ-ONLY | Nie | Tak | Tak | Średnie | Realna diagnostyka, ale część kroków może zwracać degraded wynik. |
+| Developer Diagnostics | REAL (MVP) | READ-ONLY | Nie | Nie (ale testuje Termux) | Tak | Niskie | Generuje pełny raport JSON/TXT i debug summary do czatu. |
+| Game Boost | HYBRID | MODYFIKUJĄCE | Często | Tak | Tak | Wysokie | Operacje wpływające na system, zależne od roota i wariantu urządzenia. |
+| Advanced Tools (fstrim/sqlite/cleaner) | HYBRID | HIGH-RISK | Tak | Tak | Tak | Wysokie | Dodane ostrzeżenia i potwierdzenia; nie wszystkie komendy działają na każdym ROM. |
+| Network Optimization | HYBRID | MODYFIKUJĄCE | Często | Tak | Częściowy | Średnie/Wysokie | Działanie komend sieciowych zależne od uprawnień i sterowników. |
+| CPU/GPU/ZRAM tweaks | HYBRID | HIGH-RISK | Tak | Tak | Ograniczony | Wysokie | Komendy per-kernel/vendor, brak gwarancji kompatybilności między urządzeniami. |
+| Restore Normal | HYBRID | HIGH-RISK | Często | Tak | Częściowy | Wysokie | Przywracanie ustawień wymaga znanego punktu odniesienia per urządzenie. |
+| Log Viewer + Export | REAL | READ-ONLY | Nie | Nie | n/d | Niskie | Stabilny eksport TXT/JSON i udział raportów przez systemowe share. |
+
+## Aktualne blokery
+- Brak pełnego, powtarzalnego workflow natywnego builda APK bezpośrednio w Termux na słabszych urządzeniach (RAM/thermal/SDK).
+- Część komend HIGH-RISK pozostaje vendor/kernal-specific i nie ma uniwersalnej gwarancji działania.
+- Część UI nadal ma hardcoded stringi (niepełne domknięcie i18n na nowych ekranach).
+- Brak pełnego zestawu testów device-flow (manual QA jest, ale automatyzacja nadal ograniczona).
+- Brak długoterminowej polityki retencji/archiwizacji operation logs po stronie backendu.
+
+## Następna iteracja
+1. Domknąć i18n dla nowych ekranów (`Developer Diagnostics`, `Advanced Tools` komunikaty ostrzeżeń/confirm).
+2. Dodać testy negatywne execution layer: `missing-termux`, `missing-root`, timeout + retry exhaust.
+3. Rozszerzyć Developer Diagnostics o clipboard + auto-attach ostatnich znormalizowanych błędów.
+4. Dodać mapę kompatybilności komend (vendor/SoC/kernel) i dynamiczne warningi per urządzenie.
+5. Dopracować runbook buildowy: checklista SDK/JDK/Gradle + troubleshooting template z logami.
+
 ## Ocena modułów
 - **UI / Nawigacja**
   - status: stabilny
@@ -178,8 +208,12 @@
 - **Zbieranie logów:** `adb logcat | tee amb_device.log`
 
 ## Build bezpośrednio z Androida / Termuxa
+- **Status tej ścieżki:** **eksperymentalna / best effort**.
 - **Wymagania:** Termux, storage access, Node 20+, pnpm, JDK (17), Android SDK/Build Tools, wystarczająca pamięć/RAM.
-- **Ograniczenia:** na wielu telefonach pełny Gradle build może być niestabilny (RAM/thermal/storage), szczególnie dla większych projektów React Native.
+- **Ograniczenia (uczciwie):**
+  - na wielu telefonach pełny Gradle build może być niestabilny (RAM/thermal/storage),
+  - konfiguracja Android SDK w Termux bywa kapryśna i czasochłonna,
+  - throttling termiczny potrafi ubijać długie buildy.
 - **Kroki (ścieżka bezpośrednia):**
   1. `pkg update && pkg upgrade`
   2. `pkg install nodejs-lts openjdk-17 git`
@@ -194,7 +228,7 @@
 - **Typowe problemy:** OOM, brak SDK components, timeouty Gradle, throttling termiczny.
 - **Obejścia/fallbacki:**
   - buduj na telefonie tylko warstwę JS/testy/self-test,
-  - finalny natywny build wykonuj na mocniejszym środowisku (lokalny Linux/macOS/CI) i przenoś APK na telefon.
+  - **fallback rekomendowany:** finalny natywny build wykonuj poza telefonem (lokalny Linux/macOS/CI), a telefon wykorzystuj do testów runtime i diagnostyki.
 - **Logi z builda:** `tee` na Gradle output + zapis raportu Developer Diagnostics z aplikacji.
 
 ## Developer diagnostics
@@ -204,3 +238,27 @@
 - **Eksport raportu:** TXT i JSON przez mechanizm share/filesystem.
 - **Raport do czatu:** zawiera sekcję `debugSummaryForChat` (gotowy blok do wklejenia).
 
+## Jak zgłosić problem do debugowania
+W zgłoszeniu (lub wklejce do czatu) podaj minimum:
+1. **wersję aplikacji** (np. `v2026.79` lub `appVersion` z raportu),
+2. **model urządzenia**,
+3. **Android version**,
+4. **status root** (tak/nie + Magisk, jeśli dotyczy),
+5. **status Termux** (connected/disconnected + czy działa Termux:API),
+6. **`debugSummaryForChat`** z ekranu Developer Diagnostics,
+7. **fragment raportu** (sekcja failing checks + recommendations),
+8. **kroki odtworzenia** (krok po kroku, co kliknięto i co miało się wydarzyć).
+
+Praktyczny szablon:
+```txt
+App version:
+Device model:
+Android version:
+Root status:
+Termux status:
+debugSummaryForChat:
+Failing checks:
+Reproduction steps:
+Expected result:
+Actual result:
+```

@@ -4,6 +4,7 @@ import {
   type TermuxCommand,
   type TermuxResult,
 } from "./termux-service";
+import type { LogEntry } from "./feature-context";
 
 export type AddLogFn = (
   level: "SUCCESS" | "WARN" | "ERROR" | "INFO" | "XDR",
@@ -43,6 +44,12 @@ export type CommandExecutionResult = {
   sessionId: string;
   timestamp: string;
   attempts: number;
+};
+
+export type RecentNormalizedError = {
+  code: NormalizedErrorCode;
+  message: string;
+  timestamp: string;
 };
 
 export type CommandDefinition = {
@@ -93,6 +100,51 @@ export function classifyTermuxError(result: TermuxResult): NormalizedErrorCode {
   }
   if (merged.trim().length > 0) return "COMMAND_FAILED";
   return "UNKNOWN";
+}
+
+export function extractNormalizedErrorCodeFromMessage(
+  message: string,
+): NormalizedErrorCode | null {
+  const match = message.match(/\(([^)]+)\):/);
+  if (!match) return null;
+
+  const code = match[1] as NormalizedErrorCode;
+  const valid: NormalizedErrorCode[] = [
+    "NONE",
+    "TERMUX_UNAVAILABLE",
+    "ROOT_REQUIRED",
+    "TIMEOUT",
+    "PERMISSION_DENIED",
+    "COMMAND_FAILED",
+    "UNKNOWN",
+  ];
+
+  return valid.includes(code) ? code : null;
+}
+
+export function collectRecentNormalizedErrors(
+  logs: LogEntry[],
+  limit = 10,
+): RecentNormalizedError[] {
+  const result: RecentNormalizedError[] = [];
+
+  for (let index = logs.length - 1; index >= 0; index -= 1) {
+    const log = logs[index];
+    if (log.level !== "ERROR") continue;
+
+    const code = extractNormalizedErrorCodeFromMessage(log.message);
+    if (!code) continue;
+
+    result.push({
+      code,
+      message: log.message,
+      timestamp: log.timestamp,
+    });
+
+    if (result.length >= limit) break;
+  }
+
+  return result;
 }
 
 function buildResult(

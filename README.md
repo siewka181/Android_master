@@ -39,15 +39,15 @@
 - Ujednolicić prerequisites checks na każdym ekranie wykonującym komendy.
 
 ### P2 — Developer diagnostics
-- Rozszerzyć self-test o więcej checks per feature + auto-collect ostatnich znormalizowanych błędów.
-- Dodać „kopiuj do schowka” dla debug summary.
+- Domknąć Developer Diagnostics v2 (clipboard/share summary, recent normalized errors, readiness score).
+- Dodać testy regresji dla struktury raportu oraz integracji feature checks.
 
 ### P3 — Build / APK / Termux readiness
-- Ustabilizować ścieżkę builda APK z telefonu (Termux) + checklistę środowiska.
+- Ustabilizować ścieżkę builda APK z telefonu (Termux) + checklistę środowiska i szybki env-check script.
 - Utrzymać fallback: lokalny dev/test na telefonie + build w zewnętrznym środowisku gdy Termux build jest niestabilny.
 
 ### P4 — Jakość / testy / release readiness
-- Dodać testy negatywne execution layer (missing-termux, missing-root, timeout).
+- Dodać testy negatywne execution layer (missing-termux, missing-root, timeout, retry-exhaust, metadata propagation).
 - Dokończyć i18n usuwając hardcoded strings z nowych ekranów.
 
 ### P5 — Dalszy rozwój
@@ -73,7 +73,7 @@
 ## Aktualne blokery
 - Brak pełnego, powtarzalnego workflow natywnego builda APK bezpośrednio w Termux na słabszych urządzeniach (RAM/thermal/SDK).
 - Część komend HIGH-RISK pozostaje vendor/kernal-specific i nie ma uniwersalnej gwarancji działania.
-- Część UI nadal ma hardcoded stringi (niepełne domknięcie i18n na nowych ekranach).
+- Część UI poza Developer Diagnostics nadal ma hardcoded stringi (niepełne domknięcie i18n globalnie).
 - Brak pełnego zestawu testów device-flow (manual QA jest, ale automatyzacja nadal ograniczona).
 - Brak długoterminowej polityki retencji/archiwizacji operation logs po stronie backendu.
 
@@ -171,20 +171,21 @@
   - ryzyka: średnie
 
 ## Ostatnia iteracja
-- Dodano ekran **Developer Diagnostics** (self-test + export raportów).
-- Rozszerzono `log-export-service` o eksport dowolnego raportu TXT/JSON.
-- README przeformatowano do stałego szablonu statusowego.
-- Dodano testy helperów execution layer i stabilizację klasyfikacji błędów.
+- Wdrożono **Developer Diagnostics v2**: clipboard/share `debugSummaryForChat`, recent normalized errors oraz final readiness summary (status + score).
+- Rozszerzono raport diagnostyczny o sekcje: `environment`, `prerequisites`, `backendConnectivity`, `executionLayerChecks`, `featureChecks`, `recentNormalizedErrors`, `finalReadinessSummary`.
+- Dodano praktyczny skrypt `scripts/termux_env_check.sh` do szybkiego sprawdzenia gotowości środowiska Termux pod debug/build.
+- Rozszerzono testy execution layer o scenariusze negatywne: missing-termux, missing-root, timeout, retry exhaust, metadata propagation i output summary przy błędzie.
 - Zmienione pliki:
   - `app/developer-diagnostics.tsx`
   - `lib/developer-diagnostics-service.ts`
   - `lib/log-export-service.ts`
   - `lib/command-execution-service.ts`
+  - `scripts/termux_env_check.sh`
   - `tests/command-execution-service.test.ts`
   - `README.md`
 - Otwarte na następną iterację:
-  - pełne i18n dla nowych ekranów,
-  - clipboard support dla debug summary,
+  - pełne i18n poza dotkniętymi ekranami,
+  - testy kontraktu raportu Developer Diagnostics,
   - rozszerzone testy device-flow.
 
 ## Manual QA
@@ -192,9 +193,11 @@
 - [ ] Root Check: urządzenie z i bez roota.
 - [ ] Advanced Tools: ostrzeżenia high-risk + potwierdzenie + logowanie operationId/sessionId.
 - [ ] Test & Fix: poprawna sekwencja kroków i obsługa fail/warn.
-- [ ] Developer Diagnostics: uruchomienie self-test, eksport TXT i JSON.
+- [ ] Developer Diagnostics: uruchomienie self-test, eksport TXT/JSON i `Copy/Share summary`.
+- [ ] Developer Diagnostics: potwierdzenie sekcji `recentNormalizedErrors` i `finalReadinessSummary`.
 - [ ] Log export: poprawny zapis i share.
 - [ ] Kluczowe ekrany w PL/EN.
+- [ ] Termux env check: uruchom `bash scripts/termux_env_check.sh` i sprawdź raport.
 
 ## Build / APK
 - **Aktualny stan:** częściowo gotowe.
@@ -204,6 +207,7 @@
   2. `pnpm check && pnpm test && pnpm lint`
   3. `npx expo prebuild --platform android`
   4. `cd android && ./gradlew assembleDebug`
+- **Quick debug helper:** przed buildem uruchom `bash scripts/termux_env_check.sh`.
 - **Instalacja APK:** `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 - **Zbieranie logów:** `adb logcat | tee amb_device.log`
 
@@ -222,9 +226,10 @@
   5. sklonuj repo do pamięci urządzenia
   6. `pnpm install`
   7. `pnpm check && pnpm test`
-  8. `npx expo prebuild --platform android`
-  9. przygotuj `ANDROID_HOME` + build-tools + platform-tools
-  10. `cd android && ./gradlew assembleDebug | tee gradle_build.log`
+  8. `bash scripts/termux_env_check.sh`
+  9. `npx expo prebuild --platform android`
+  10. przygotuj `ANDROID_HOME` + build-tools + platform-tools
+  11. `cd android && ./gradlew assembleDebug | tee gradle_build.log`
 - **Typowe problemy:** OOM, brak SDK components, timeouty Gradle, throttling termiczny.
 - **Obejścia/fallbacki:**
   - buduj na telefonie tylko warstwę JS/testy/self-test,
@@ -233,10 +238,11 @@
 
 ## Developer diagnostics
 - **Uruchomienie:** z menu głównego -> `Developer Diagnostics`.
-- **Co testuje (MVP):** runtime/platform, permissions status, root/termux status, backend connectivity, execution-layer sanity checks.
+- **Co testuje (v2):** runtime/platform, permissions status, root/termux status, backend connectivity, execution-layer sanity checks, feature-level readiness checks.
 - **Gdzie zapisuje logi:** przez istniejący system logów aplikacji + raport eksportowany do pliku.
 - **Eksport raportu:** TXT i JSON przez mechanizm share/filesystem.
-- **Raport do czatu:** zawiera sekcję `debugSummaryForChat` (gotowy blok do wklejenia).
+- **Raport do czatu:** zawiera sekcję `debugSummaryForChat` (gotowy blok do wklejenia) + `recentNormalizedErrors`.
+- **Copy summary:** przycisk `Copy/Share summary` najpierw używa Clipboard API; gdy niedostępny, robi share pliku TXT.
 
 ## Jak zgłosić problem do debugowania
 W zgłoszeniu (lub wklejce do czatu) podaj minimum:
@@ -246,8 +252,10 @@ W zgłoszeniu (lub wklejce do czatu) podaj minimum:
 4. **status root** (tak/nie + Magisk, jeśli dotyczy),
 5. **status Termux** (connected/disconnected + czy działa Termux:API),
 6. **`debugSummaryForChat`** z ekranu Developer Diagnostics,
-7. **fragment raportu** (sekcja failing checks + recommendations),
-8. **kroki odtworzenia** (krok po kroku, co kliknięto i co miało się wydarzyć).
+7. **recent normalized errors** (jeśli są),
+8. **fragment raportu** (sekcja failing checks + recommendations),
+9. **wynik `finalReadinessSummary`**,
+10. **kroki odtworzenia** (krok po kroku, co kliknięto i co miało się wydarzyć).
 
 Praktyczny szablon:
 ```txt
@@ -262,3 +270,35 @@ Reproduction steps:
 Expected result:
 Actual result:
 ```
+
+## Kontekst do dalszej analizy / promptów
+1. **Co faktycznie zmieniono w tej iteracji**
+   - Developer Diagnostics v2: clipboard/share summary, recent normalized errors, readiness score.
+   - Rozszerzona struktura raportu diagnostycznego o sekcje per subsystem/feature.
+   - Testy execution layer rozszerzone o ścieżki negatywne i metadata propagation.
+   - Dodany skrypt `scripts/termux_env_check.sh` dla szybkiej oceny środowiska Termux.
+2. **Co działa po zmianach**
+   - Z telefonu można uruchomić self-test i od razu skopiować/udostępnić summary do czatu.
+   - Raport ma teraz bardziej praktyczny kontekst debugowy (recent errors + readiness).
+   - Testy lepiej chronią warstwę execution przed regresją.
+3. **Czego nadal brakuje**
+   - Globalne domknięcie i18n poza dotkniętymi ekranami.
+   - Automatyzacja testów device-flow i testów UI.
+   - Stabilny, uniwersalny build natywny APK w Termux dla słabszych urządzeń.
+4. **Największe obecne ryzyka**
+   - Ograniczenia per urządzenie/ROM/kernel przy komendach high-risk.
+   - Ograniczenia zasobów telefonu (RAM/thermal) przy buildzie Gradle.
+   - Częściowa zależność od środowiska (root, Termux:API, backend availability).
+5. **Najbardziej sensowna następna iteracja**
+   - Dodać testy kontraktu `DeveloperDiagnosticsReport` (stabilność formatu).
+   - Rozszerzyć diagnostics o test export/share + status clipboard availability.
+   - Dodać mapę kompatybilności komend per vendor/SoC i dynamiczne ostrzeżenia.
+   - Uzupełnić i18n w kolejnych ekranach high-risk.
+6. **Co wkleić do czatu / analizy przy problemie**
+   - `appVersion`, `device model`, `Android version`, `root status`, `Termux status`,
+   - `debugSummaryForChat`, `recentNormalizedErrors`, `failing checks`,
+   - kroki odtworzenia, expected vs actual result.
+7. **Jeśli Codex napotkał ograniczenia**
+   - **Repo:** brak dedykowanego modułu clipboard cross-platform bez dodatkowych zależności.
+   - **Expo/Android/Termux:** clipboard API i build natywny zachowują się różnie zależnie od runtime i urządzenia.
+   - **Środowisko testowe:** brak fizycznego telefonu w tym środowisku — część walidacji wymaga manualnego testu on-device.

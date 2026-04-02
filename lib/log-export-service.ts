@@ -183,16 +183,19 @@ export async function copyLogsToClipboard(
   format: "txt" | "json" = "txt"
 ): Promise<boolean> {
   try {
-    const Clipboard = require("@react-native-async-storage/async-storage");
     const content =
       format === "json"
         ? await exportLogsAsJson(logs)
         : await exportLogsAsTxt(logs);
 
-    // In real app, use react-native-clipboard
-    // For now, just log it
-    console.log("Logs copied to clipboard (mock)");
-    return true;
+    const clipboard = globalThis.navigator?.clipboard;
+    if (clipboard?.writeText) {
+      await clipboard.writeText(content);
+      return true;
+    }
+
+    console.log("Clipboard API unavailable - copy fallback not supported in current runtime.");
+    return false;
   } catch (error) {
     console.error("Failed to copy logs:", error);
     return false;
